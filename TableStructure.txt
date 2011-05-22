@@ -1,0 +1,21 @@
+schedule table:
+id
+studio_id
+class_name
+
+start_time
+end_time
+
+day_of_the_week
+
+start_date
+end_date
+
+
+schedule exception table:
+schedule_id
+date
+start_time
+end_time
+reason
+flag: cancelled/additional/moved
