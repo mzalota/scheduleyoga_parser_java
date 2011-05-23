@@ -58,11 +58,23 @@ public class Parser {
 	static public final String STUDIO_JOSCHI_NYC = "Joschi_NYC";  //http://www.joschinyc.com
 	static public final String STUDIO_JIVAMUKTIYOGA = "JivamuktiYoga";  //http://www.jivamuktiyoga.com
 	static public final String STUDIO_LAUGHING_LOTUS = "Laughing_Lotus"; //http://www.laughinglotus.com/
+	static public final String STUDIO_OM_YOGA = "Om_yoga"; //http://www.omyoga.com
+	
+	static public final int STUDIO_ID_BABTISTE = 1;  
+	static public final int STUDIO_ID_KAIAYOGA = 2;  
+	static public final int STUDIO_ID_JOSCHI_NYC = 3;  
+	static public final int STUDIO_ID_JIVAMUKTIYOGA = 4;  
+	static public final int STUDIO_ID_LAUGHING_LOTUS = 5;
+	static public final int STUDIO_ID_OM_YOGA = 6;
+	
 	
 	protected String studioID;
 	protected Map<String, String> xPath = new HashMap<String, String>();
 	protected Map<String, String> scheduleURL = new HashMap<String, String>();
 	
+	protected Map<String, Integer> studioIDNameMap = new HashMap<String, Integer>();
+	
+
 	public static Parser createNew (String studioIDParam) {
 		
 		Parser newObj = new Parser();
@@ -72,12 +84,21 @@ public class Parser {
 		newObj.xPath.put(Parser.STUDIO_JOSCHI_NYC, "/html/body/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]"); //http://www.joschinyc.com
 		newObj.xPath.put(Parser.STUDIO_JIVAMUKTIYOGA, "/html/body/table[2]");
 		newObj.xPath.put(Parser.STUDIO_LAUGHING_LOTUS, "/html/body/div/div[3]/div[2]/div/div[2]/div/div[2]/table");
+		newObj.xPath.put(Parser.STUDIO_OM_YOGA, "/html/body/div/div/div/div[6]/div[2]/div/div[2]/table/tbody/tr/td/table[2]/tbody/tr/td/table[2]");
 		
 		newObj.scheduleURL.put(Parser.STUDIO_BABTISTE, "https://clients.mindbodyonline.com/ASP/home.asp?studioid=1466");
 		newObj.scheduleURL.put(Parser.STUDIO_KAIAYOGA, "https://clients.mindbodyonline.com/ASP/home.asp?studioid=2148");
 		newObj.scheduleURL.put(Parser.STUDIO_JOSCHI_NYC, "http://www.joschinyc.com/schedule.html");
 		newObj.scheduleURL.put(Parser.STUDIO_JIVAMUKTIYOGA, "http://www.jivamuktiyoga.com/class/schedules.jsp?scheduleType=Center&viewCriteriaID=1");
 		newObj.scheduleURL.put(Parser.STUDIO_LAUGHING_LOTUS, "http://nyc.laughinglotus.com/classschedule.html");  //https://clients.mindbodyonline.com/ASP/home.asp?studioid=137
+		newObj.scheduleURL.put(Parser.STUDIO_OM_YOGA, "http://www.omyoga.com/index.php?option=com_content&view=article&id=54&Itemid=104");
+		
+		newObj.studioIDNameMap.put(Parser.STUDIO_BABTISTE, STUDIO_ID_BABTISTE);
+		newObj.studioIDNameMap.put(Parser.STUDIO_KAIAYOGA, STUDIO_ID_KAIAYOGA);
+		newObj.studioIDNameMap.put(Parser.STUDIO_JOSCHI_NYC, STUDIO_ID_JOSCHI_NYC);
+		newObj.studioIDNameMap.put(Parser.STUDIO_JIVAMUKTIYOGA, STUDIO_ID_JIVAMUKTIYOGA);
+		newObj.studioIDNameMap.put(Parser.STUDIO_LAUGHING_LOTUS, STUDIO_ID_LAUGHING_LOTUS);
+		newObj.studioIDNameMap.put(Parser.STUDIO_OM_YOGA, STUDIO_ID_OM_YOGA);
 		
 		if (!newObj.scheduleURL.containsKey(studioIDParam)) {
 			//TODO: throw exception
@@ -113,7 +134,22 @@ public class Parser {
 			parseLaughingLotus();
 		}
         
+		if (studioID.equalsIgnoreCase(Parser.STUDIO_OM_YOGA)) {
+			parseLaughingLotus();
+		}
+		
+		int studioID2 = studioIDFromStudioName(studioID);
+		switch (studioID2) {
+		case STUDIO_ID_OM_YOGA:
+			parseOmYoga();
+		}
+		
 	}
+	
+	protected int studioIDFromStudioName(String studioName){		
+		return studioIDNameMap.get(studioName);
+	}
+	
 
 	protected boolean rowIsHeaderWithDaysOfTheWeek(HtmlTableRow row){
 		
@@ -129,6 +165,67 @@ public class Parser {
     	return true;
 	}
 	
+	protected void parseOmYoga() throws FailingHttpStatusCodeException, IOException{
+		String urlStr = scheduleURL.get(studioID);		
+		WebClient webClient = new WebClient();
+        URL url = new URL(urlStr); 
+		
+        HtmlPage page = (HtmlPage) webClient.getPage(url);
+        String xPathParam = xPath.get(studioID); 
+        HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
+        
+        Segment calendarSegment = Segment.createNewFromElement(table);
+        System.out.println("The table is: "+calendarSegment);
+        
+        for (final Segment row : calendarSegment.getRows()){
+        	System.out.println("row is: "+row);
+        	for (final Segment cell : row.getCells()){      
+        		if (cell == null){
+        			continue;
+        		}
+        		System.out.println(" Cell content: ");
+        		for (final Segment subRow : cell.getRows()){     
+        			if (subRow == null){
+        				continue;
+        			}
+        			if (subRow.isBlank()){
+        				continue;
+        			}
+        			System.out.println(" subRow is: " + StringUtils.trim(subRow.asText()));
+        		}
+
+        	}
+        }
+        
+//        
+//		for (final HtmlTableRow row : table.getRows()) {
+//			// rowCount++;
+//			// System.out.println("Found row: "+rowCount);
+//			// System.out.println("Row value: "+row.toString());
+//			List<HtmlTableCell> cells = row.getCells();
+//
+//			System.out.println("Number of cells: " + cells.size());
+//
+//			printCellsInRow(row);
+//			continue;
+//			
+////			if (rowIsHeaderWithDaysOfTheWeek(row)) {
+////				System.out.println("Columns Are Days of the week!!!");
+////			}
+////
+////			
+////
+////			for (final HtmlTableCell cell : row.getCells()) {
+////				if (containsTime(cell.asText())) {
+////					System.out
+////							.println(" Time and Instructor: " + cell.asText());
+////				} else if (StringUtils.isNotBlank(cell.asText().trim())) {
+////					System.out.println(" Class is: " + cell.asText());
+////				}
+////			}
+//		}
+	}
+	
 	protected void parseJivamukti() throws FailingHttpStatusCodeException, IOException{
 		
 		String urlStr = scheduleURL.get(studioID);		
@@ -142,42 +239,43 @@ public class Parser {
         String xPathParam = xPath.get(studioID); 
         HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
         
-	        for (final HtmlTableRow row : table.getRows()) {
-				//rowCount++;
-	            //System.out.println("Found row: "+rowCount);
-	            //System.out.println("Row value: "+row.toString());
-	            List<HtmlTableCell> cells = row.getCells();
-	            
-	            System.out.println("Number of cells: "+cells.size());
-	            
-	            if (rowIsHeaderWithDaysOfTheWeek(row)){
-	        		System.out.println("Columns Are Days of the week!!!");
-	        	}
-	            
-	    		//printCellsInRow(row);
-	    		
-	    		for (final HtmlTableCell cell : row.getCells()) {
-	    			if (containsTime(cell.asText())) {
-	    				System.out.println(" Time and Instructor: " + cell.asText());
-	    			} else if(StringUtils.isNotBlank(cell.asText().trim()))  {
-	    				System.out.println(" Class is: " + cell.asText());
-	    			}
-	    		}
-	    		
-//	    		
-//	    		if (cells.size()<4){
-//	    			continue;
-//	    		}
-//	    		String dateTime = StringUtils.trim(cells.get(1).asText()).replaceAll("\\s+", " ");;
-//	    		if (containsDate(dateTime)) {
-//	    			System.out.println("Date is "+dateTime);
-//	    			continue;	    			
-//	    		}
-//	    		String time = StringUtils.trim(cells.get(1).asText());
-//	    		String className = StringUtils.trim(cells.get(2).asText());
-//	    		String instructor = StringUtils.trim(cells.get(3).asText());
-//	    		System.out.println("Time is: "+time+", class is: "+className+", instructor is: "+instructor);
-	        }
+		for (final HtmlTableRow row : table.getRows()) {
+			// rowCount++;
+			// System.out.println("Found row: "+rowCount);
+			// System.out.println("Row value: "+row.toString());
+			List<HtmlTableCell> cells = row.getCells();
+
+			System.out.println("Number of cells: " + cells.size());
+
+			if (rowIsHeaderWithDaysOfTheWeek(row)) {
+				System.out.println("Columns Are Days of the week!!!");
+			}
+
+			// printCellsInRow(row);
+
+			for (final HtmlTableCell cell : row.getCells()) {
+				if (containsTime(cell.asText())) {
+					System.out
+							.println(" Time and Instructor: " + cell.asText());
+				} else if (StringUtils.isNotBlank(cell.asText().trim())) {
+					System.out.println(" Class is: " + cell.asText());
+				}
+			}
+		}
+	        
+//    		
+//    		if (cells.size()<4){
+//    			continue;
+//    		}
+//    		String dateTime = StringUtils.trim(cells.get(1).asText()).replaceAll("\\s+", " ");;
+//    		if (containsDate(dateTime)) {
+//    			System.out.println("Date is "+dateTime);
+//    			continue;	    			
+//    		}
+//    		String time = StringUtils.trim(cells.get(1).asText());
+//    		String className = StringUtils.trim(cells.get(2).asText());
+//    		String instructor = StringUtils.trim(cells.get(3).asText());
+//    		System.out.println("Time is: "+time+", class is: "+className+", instructor is: "+instructor);
         
 	}
 	

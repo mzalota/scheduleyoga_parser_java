@@ -50,18 +50,25 @@ public class Main {
 		
 		Parser parser;
 		try {
+			
+			System.out.println("Loading Schedule from "+Parser.STUDIO_OM_YOGA);
+			parser = Parser.createNew(Parser.STUDIO_OM_YOGA);
+			parser.parseSite();
+			
+//			System.out.println("Loading Schedule from "+Parser.STUDIO_JIVAMUKTIYOGA);
+//			parser = Parser.createNew(Parser.STUDIO_JIVAMUKTIYOGA);
+//			parser.parseSite();			
+			
 //			System.out.println("Loading Schedule from "+Parser.STUDIO_JOSCHI_NYC);
 //			parser = Parser.createNew(Parser.STUDIO_JOSCHI_NYC);
 //			parser.parseSite();
 			
-//			System.out.println("Loading Schedule from "+Parser.STUDIO_JIVAMUKTIYOGA);
-//			parser = Parser.createNew(Parser.STUDIO_JIVAMUKTIYOGA);
-//			parser.parseSite();
 
-			System.out.println("Loading Schedule from "+Parser.STUDIO_LAUGHING_LOTUS);
-			parser = Parser.createNew(Parser.STUDIO_LAUGHING_LOTUS);
-			parser.parseSite();			
-			
+
+//			System.out.println("Loading Schedule from "+Parser.STUDIO_LAUGHING_LOTUS);
+//			parser = Parser.createNew(Parser.STUDIO_LAUGHING_LOTUS);
+//			parser.parseSite();			
+//			
 			
 			
 //			System.out.println("Loading Schedule from "+Parser.STUDIO_KAIAYOGA);
