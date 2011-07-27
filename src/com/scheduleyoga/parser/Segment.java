@@ -31,13 +31,21 @@ import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
 public class Segment {
 	
 	protected HtmlElement element;
-	protected List<Event> events ;
+
 	
 	public static Segment createNewFromElement (HtmlElement elem) {
 		Segment newObj = new Segment();
 		newObj.element = elem;
-		newObj.events = new ArrayList<Event>();
+		
 		return newObj;
+	}
+
+	public HtmlElement getElement() {
+		return element;
+	}
+
+	public void setElement(HtmlElement element) {
+		this.element = element;
 	}
 
 	public List<Segment> getRows() {
@@ -88,7 +96,8 @@ public class Segment {
 			for (final Segment cell : row.getCells()){
 				output = output+"<td style=\"border: 1px solid red;\">";
 				if (!cell.isBlank()){ //cell != null &&
-					output = output+cell.htmlTextFromCell();
+					List<Event> events = eventsFromCell(cell.getElement());
+					output = output+buildHTMLForEvents(events);
 				}				
 				output = output+"</td>";
 			}
@@ -99,11 +108,12 @@ public class Segment {
 
 	}
 	
-	protected String htmlTextFromCell() {
-		String output = "";
+	public List<Event> eventsFromCell(HtmlElement elementParam) {
 		
-		if (!HtmlTableCell.class.isAssignableFrom(element.getClass())) {
-			return asText();
+		List<Event> events = new ArrayList<Event>();
+		
+		if (!HtmlTableCell.class.isAssignableFrom(elementParam.getClass())) {
+			return events;
 		}
 		
 //		HtmlTableCell cell = (HtmlTableCell) element;
@@ -115,7 +125,7 @@ public class Segment {
 //		}
 		
 		List<HtmlElement> pElements = new ArrayList<HtmlElement>();
-		pElements.add(element);
+		pElements.add(elementParam);
 		
 		for (final HtmlElement subRow : pElements){     
 			if (subRow == null){
@@ -125,6 +135,9 @@ public class Segment {
 			List<HtmlElement> leafElements = getLeafElements(subRow);
 			List<String> parts = new ArrayList<String>();
 			for (final HtmlElement leaf : leafElements){   
+				
+				SAXParserExample tmpParserExample = new SAXParserExample();
+				String elementValue = tmpParserExample.parseDocument(leaf.asXml());
 				String txt = StringUtils.trim(leaf.asText());
 				if (!StringUtils.isBlank(txt)){
 					parts.add(txt);
@@ -149,13 +162,23 @@ public class Segment {
 				events.add(event);
 			}
 		}
-	
 		
+		return events;
+	}
+
+	/**
+	 * @param events
+	 * @return String output
+	 */
+	protected String buildHTMLForEvents(List<Event> events) {
+		String output = "";
 		for (final Event event : events){ 
 			output = output+"++"+event.getStartTimeStr()+"++ <br/>";
 			output = output+event.getComment();
 			output = output+"<hr />";
 		}
+		
+		System.out.println("NbuildHTMLForEvents: "+output);
 		
 		return output;
 	}
@@ -189,11 +212,8 @@ public class Segment {
 			return retList;
 		}		
 		
-		//System.out.println("LOADING: "+elementParam.getNodeName() +" textContent: "+elementParam.getTextContent()); 
-		
-		String xmlStr = elementParam.asXml();
 		SAXParserExample tmpParserExample = new SAXParserExample();
-		String elementValue = tmpParserExample.parseDocument(xmlStr);
+		String elementValue = tmpParserExample.parseDocument(elementParam.asXml());
 		
 		if (!StringUtils.isBlank(elementValue)){
 			System.out.println("Node Value is: "+elementValue);
@@ -206,7 +226,6 @@ public class Segment {
 		
 		return retList;
 	}
-	
 	
 	
 	protected List<String> breakIntoParts(HtmlElement elementParam) {
