@@ -1,5 +1,6 @@
 package com.scheduleyoga.tests;
 
+import com.scheduleyoga.parser.Helper;
 import com.scheduleyoga.parser.Parser;
 
 import junit.framework.Test;
@@ -51,7 +52,7 @@ public class SimpleTest extends TestCase {
 		
 		//EXECUTE
 		Parser parser = new Parser();
-		boolean result = parser.containsTime(TEST_TIME);
+		boolean result = Helper.createNew().containsTime(TEST_TIME);
 		
 		//ASSERT
 		assertTrue(result);
@@ -64,7 +65,7 @@ public class SimpleTest extends TestCase {
 		
 		//EXECUTE
 		Parser parser = new Parser();
-		boolean result = parser.containsTime(TEST_TIME);
+		boolean result = Helper.createNew().containsTime(TEST_TIME);
 		
 		//ASSERT
 		assertTrue(result);
@@ -78,7 +79,7 @@ public class SimpleTest extends TestCase {
 		
 		//EXECUTE
 		Parser parser = new Parser();
-		boolean result = parser.containsTime(TEST_TIME);
+		boolean result = Helper.createNew().containsTime(TEST_TIME);
 		
 		//ASSERT
 		assertTrue(result);
@@ -92,11 +93,25 @@ public class SimpleTest extends TestCase {
 		
 		//EXECUTE
 		Parser parser = new Parser();
-		boolean result = parser.containsTime(TEST_DATE);
+		boolean result = Helper.createNew().containsTime(TEST_DATE);
 		
 		//ASSERT
 		assertTrue(result);
 	}
+	
+	public void testContainsTime_hourMinutesAmerican_noSuffix() {
+		
+		//SETUP
+		String TEST_DATE = "  4:15 ";
+		
+		//EXECUTE
+		Parser parser = new Parser();
+		boolean result = Helper.createNew().containsTime(TEST_DATE);
+		
+		//ASSERT
+		assertTrue(result);
+	}
+	
 	
 	public void testContainsDate_hasYear() {
 		

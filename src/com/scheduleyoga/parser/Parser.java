@@ -110,16 +110,16 @@ public class Parser {
 		return newObj;	 
 	}
 
-	public void parseSite() throws IOException{
+	public String parseSite() throws IOException{
 		
 		if (!scheduleURL.containsKey(studioID)) {
 			//TODO: throw exception
-			return;
+			return "";
 		}
 		
 		if (studioID.equalsIgnoreCase(Parser.STUDIO_BABTISTE) || studioID.equalsIgnoreCase(Parser.STUDIO_KAIAYOGA)){		
 			parseMindAndBodyOnline();
-			return;
+			return "";
 		}
 		
 		if (studioID.equalsIgnoreCase(Parser.STUDIO_JOSCHI_NYC)) {
@@ -140,10 +140,10 @@ public class Parser {
 		
 		int studioID2 = studioIDFromStudioName(studioID);
 		switch (studioID2) {
-		case STUDIO_ID_OM_YOGA:
-			parseOmYoga();
+			case STUDIO_ID_OM_YOGA:
+				return parseOmYoga();
 		}
-		
+		return "";
 	}
 	
 	protected int studioIDFromStudioName(String studioName){		
@@ -165,65 +165,63 @@ public class Parser {
     	return true;
 	}
 	
-	protected void parseOmYoga() throws FailingHttpStatusCodeException, IOException{
-		String urlStr = scheduleURL.get(studioID);		
+	protected String parseOmYoga() throws FailingHttpStatusCodeException, IOException{
+		
+		Studio studio = getStudio();
+			
 		WebClient webClient = new WebClient();
-        URL url = new URL(urlStr); 
+        URL url = new URL(studio.getUrl()); 
 		
         HtmlPage page = (HtmlPage) webClient.getPage(url);
-        String xPathParam = xPath.get(studioID); 
-        HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
+        HtmlTable table = (HtmlTable) page.getByXPath(studio.getxPath()).get(0);
         
         Segment calendarSegment = Segment.createNewFromElement(table);
-        System.out.println("The table is: "+calendarSegment);
+        System.out.println("The table is: "+calendarSegment);                
         
-        for (final Segment row : calendarSegment.getRows()){
-        	System.out.println("row is: "+row);
-        	for (final Segment cell : row.getCells()){      
-        		if (cell == null){
-        			continue;
-        		}
-        		System.out.println(" Cell content: ");
-        		for (final Segment subRow : cell.getRows()){     
-        			if (subRow == null){
-        				continue;
-        			}
-        			if (subRow.isBlank()){
-        				continue;
-        			}
-        			System.out.println(" subRow is: " + StringUtils.trim(subRow.asText()));
-        		}
+        return calendarSegment.asHTMLTable();
+        
+//        for (final Segment row : calendarSegment.getRows()){
+//        	System.out.println("row is: "+row);
+//        	for (final Segment cell : row.getCells()){      
+//        		if (cell == null){
+//        			continue;
+//        		}
+//        		if (!cell.isBlank()){
+//        			System.out.println(" Cell content: ");
+//        		}
+//        		
+//        		for (final Segment subRow : cell.getRows()){     
+//        			if (subRow == null){
+//        				continue;
+//        			}
+//        			if (subRow.isBlank()){
+//        				continue;
+//        			}
+//        			System.out.println(" subRow is: " + StringUtils.trim(subRow.asText()));
+//        		}
+//
+//        	}
+//        }
 
-        	}
-        }
+	}
+
+	/**
+	 * 
+	 * @return Studio
+	 */
+	public Studio getStudio() {
+		Studio studio = Studio.createNew();
         
-//        
-//		for (final HtmlTableRow row : table.getRows()) {
-//			// rowCount++;
-//			// System.out.println("Found row: "+rowCount);
-//			// System.out.println("Row value: "+row.toString());
-//			List<HtmlTableCell> cells = row.getCells();
-//
-//			System.out.println("Number of cells: " + cells.size());
-//
-//			printCellsInRow(row);
-//			continue;
-//			
-////			if (rowIsHeaderWithDaysOfTheWeek(row)) {
-////				System.out.println("Columns Are Days of the week!!!");
-////			}
-////
-////			
-////
-////			for (final HtmlTableCell cell : row.getCells()) {
-////				if (containsTime(cell.asText())) {
-////					System.out
-////							.println(" Time and Instructor: " + cell.asText());
-////				} else if (StringUtils.isNotBlank(cell.asText().trim())) {
-////					System.out.println(" Class is: " + cell.asText());
-////				}
-////			}
-//		}
+		studio.setId(studioIDFromStudioName(studioID));
+		studio.setName(studioID);
+		
+        String urlStr = scheduleURL.get(studioID);
+        studio.setUrl(urlStr);
+        
+        String xPathParam = xPath.get(studioID); 
+        studio.setxPath(xPathParam);
+        
+        return studio;
 	}
 	
 	protected void parseJivamukti() throws FailingHttpStatusCodeException, IOException{
@@ -254,7 +252,7 @@ public class Parser {
 			// printCellsInRow(row);
 
 			for (final HtmlTableCell cell : row.getCells()) {
-				if (containsTime(cell.asText())) {
+				if (Helper.createNew().containsTime(cell.asText())) {
 					System.out
 							.println(" Time and Instructor: " + cell.asText());
 				} else if (StringUtils.isNotBlank(cell.asText().trim())) {
@@ -502,7 +500,7 @@ public class Parser {
 				rowsWithDate.put(rowCount, columnCount);
 			}
 			
-			if (containsTime(cell.asText())){
+			if (Helper.createNew().containsTime(cell.asText())){
 				columnsWithTime.put(columnCount,rowCount);
 			}
 			System.out.println(" Columns: " + cell.asText());
@@ -544,36 +542,36 @@ public class Parser {
 		return false;
 	}
 	
-	public boolean containsTime(String text){
-				
-		//Pattern that matches "4 pm " --"(\\d{1,2}\\s*[aApP][mM]{0,2})" 
-		//Pattern that matches "12:30 am " -- "([0-1]{0,1}[\\d]:[\\d]{2}\\s*[aApP][mM]{0,2})"  
-		String ptrn = "(\\d{1,2}\\s*[aApP][mM]{0,2})|([0-1]{0,1}[\\d]:[\\d]{2}\\s*[aApP][mM]{0,2})"; //"[0-9]+\\s*([aApP][mM]{0,2})\\s*$";
-		Pattern pattern = Pattern.compile(ptrn);
-		
-		Matcher matcher = pattern.matcher(text);
-		boolean found = matcher.find();
-		
-		if (found) {
-			return true;
-		}
-			
-//		// Matches " 4:30 PM "
-//		ptrn = "[0-1]{0,1}\\d:[\\d]{2}\\s*[aApP][mM]{0,2}";
-//		pattern = Pattern.compile(ptrn);
+//	public boolean containsTime(String text){
+//				
+//		//Pattern that matches "4 pm " --"(\\d{1,2}\\s*[aApP][mM]{0,2})" 
+//		//Pattern that matches "12:30 am " -- "([0-1]{0,1}[\\d]:[\\d]{2}\\s*[aApP][mM]{0,2})"  
+//		String ptrn = "(\\d{1,2}\\s*[aApP][mM]{0,2})|([0-1]{0,1}[\\d]:[\\d]{2}\\s*[aApP][mM]{0,2})"; //"[0-9]+\\s*([aApP][mM]{0,2})\\s*$";
+//		Pattern pattern = Pattern.compile(ptrn);
 //		
-//		matcher = pattern.matcher(text);
-//		found = matcher.find();
-		
-		
-//		if (found){
-//			System.out.println("Found text: "+matcher.group() +" in position: "+matcher.start() + " till postition: "+matcher.end());
-//		} else {
-//			System.out.println ("Not found time");
+//		Matcher matcher = pattern.matcher(text);
+//		boolean found = matcher.find();
+//		
+//		if (found) {
+//			return true;
 //		}
-		
-		return found;
-	}
+//			
+////		// Matches " 4:30 PM "
+////		ptrn = "[0-1]{0,1}\\d:[\\d]{2}\\s*[aApP][mM]{0,2}";
+////		pattern = Pattern.compile(ptrn);
+////		
+////		matcher = pattern.matcher(text);
+////		found = matcher.find();
+//		
+//		
+////		if (found){
+////			System.out.println("Found text: "+matcher.group() +" in position: "+matcher.start() + " till postition: "+matcher.end());
+////		} else {
+////			System.out.println ("Not found time");
+////		}
+//		
+//		return found;
+//	}
 
 	private void printPageSourceCode(HtmlPage page) {
 		System.out.println(page.getTitleText());
