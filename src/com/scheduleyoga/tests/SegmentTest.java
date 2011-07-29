@@ -140,12 +140,44 @@ public class SegmentTest {
 		
 		assertEquals(1, events.size());
 		assertEquals("5:30", events.get(0).getStartTimeStr());
+		//assertEquals("meditation $5", events.get(0).getComment());
+	}	
+	
+	@Test
+	public void testEventsFromCell_smthelse() throws Exception {
+		
+		String xmlSample = "" +
+		"<td id=\"maxtest\" valign=\"top\" style=\"border: 1px solid #9fc6e4; text-align: left;\">" +"\r\n"+ 
+		"\r\n" + 
+		"<p><span style=\"color: #0079c2;\"><span style=\"font-size: 8pt;\"> </span></span></p>\r\n" + 
+		"<p><span style=\"color: #0079c2;\"><span style=\"font-size: 8pt;\"><strong>6:00</strong><br><a href=\"/index.php?option=com_content&amp;view=article&amp;id=164%3Aom-yoga-stretch-open&amp;catid=57&amp;Itemid=104\" title=\"OM yoga Class Descriptions\"><span style=\"color: #0fae09;\">express</span></a><br></span></span><a title=\"Edward Jones\" href=\"/index.php?option=com_content&amp;view=article&amp;id=101:edward-jones&amp;catid=59&amp;Itemid=197\"><span style=\"font-size: 8pt;\"> </span></a><a href=\"/index.php?option=com_content&amp;view=article&amp;id=146%3Aeli-jacobowitz&amp;catid=59&amp;Itemid=104\">eli</a><span style=\"color: #0079c2;\"><br></span></p>\r\n" + 
+		"<p>&nbsp;</p>\r\n" + 
+		"<p>&nbsp;</p>\r\n" + 
+		"<p>&nbsp;</p>\r\n" + 
+		"<p>&nbsp;</p>\r\n" + 
+		"<p>&nbsp;</p>"+
+		"</td>";		
+		
+		HtmlElement element = createHtmlElement(xmlSample);
+
+		Segment segment = Segment.createNewFromElement(element);
+		List<Event> events = segment.eventsFromCell(element);
+		
+		assertEquals(1, events.size());
+		assertEquals("6:00", events.get(0).getStartTimeStr());
+		assertEquals("express<br/>eli", events.get(0).getComment());
+		//assertEquals("meditation $5", events.get(0).getComment());
 	}	
 	
 //	@Test
 	public void testEventsFromCell_fourTextElements() throws Exception {
 		
 		String xmlSample = "" +
+		"<html lang=\"en-gb\" xml:lang=\"en-gb\" xmlns=\"http://www.w3.org/1999/xhtml\">\r\n" + 
+		"<head>\r\n" + 
+		"<meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\">"+
+		"</head>"+
+		"<body>"+
 		"<td id=\"maxtest\" valign=\"top\" style=\"border: 1px solid #9fc6e4; text-align: left;\">" +"\r\n"+ 
 		"	<p>" +"\r\n"+ 
 		"		<span style=\"color: #0079c2;\">" +"\r\n"+ 
@@ -159,7 +191,9 @@ public class SegmentTest {
 		"			</span>" +"\r\n"+ 
 		"		</span>" +"\r\n"+ 
 		"	</p>" +"\r\n"+ 
-		"</td>";		
+		"</td>"+
+		"</body>"+
+		"</html>";		
 		
 		HtmlElement element = createHtmlElement(xmlSample);
 

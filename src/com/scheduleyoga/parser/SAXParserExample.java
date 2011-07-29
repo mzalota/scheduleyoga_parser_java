@@ -1,17 +1,23 @@
 package com.scheduleyoga.parser;
 
-
+import java.lang.String;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -21,10 +27,12 @@ public class SAXParserExample extends DefaultHandler{
 	private int treeLevel;
 	//private Stack<String> uriStack;
 	
+	private List<String> values;
+	
 	public SAXParserExample(){
 		treeLevel = 0;
 		value = StringUtils.EMPTY;
-		//uriStack = new Stack<String>();
+		values = new ArrayList<String>();
 	}
 
 	public String parseDocument(String xmlStr) {
@@ -41,7 +49,14 @@ public class SAXParserExample extends DefaultHandler{
 			SAXParser sp = spf.newSAXParser();
 			
 			//parse the file and also register this class for call backs
-			InputStream is = new ByteArrayInputStream(xmlStr.getBytes("US-ASCII"));
+			
+			InputStream is = new ByteArrayInputStream(xmlStr.getBytes("UTF-8"));// ISO-8859-1 UTF-8 US-ASCII
+			InputSource inSource = new InputSource(is);
+			
+//			StringReader strReader = new StringReader(xmlStr);
+//			InputSource inSource = new InputSource(strReader);
+//			inSource.setEncoding("UTF-8");
+			
 			sp.parse(is, this);
 			
 			return StringUtils.trim(value); 
@@ -57,18 +72,30 @@ public class SAXParserExample extends DefaultHandler{
 	}
 
 	public void characters(char[] ch, int start, int length) throws SAXException {
+		
 		String tempVal = new String(ch,start,length);
+		
+		tempVal = StringEscapeUtils.escapeHtml(tempVal);
+		tempVal = tempVal.replaceAll("&nbsp;", " ");
+		tempVal = StringEscapeUtils.unescapeHtml(tempVal);
+		
+		tempVal = StringUtils.trim(StringUtils.strip(tempVal));
 		if (!StringUtils.isBlank(tempVal)){
-			//System.out.println("TreeLevel: "+treeLevel+", Value of Element: "+tempVal);
 			if (treeLevel == 1){
 				//this text is inside an item on the top level in XML. record it 
-				value += StringUtils.trim(tempVal)+" ";
+				value += tempVal+" ";
 				
-				//System.out.println("Value in SAX is : "+value);
 			}
+			values.add(tempVal);
 		}
+		
+		
 	}
 	
+	public List<String> getValues() {
+		return values;
+	}
+
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
 		treeLevel++;
 		//System.out.println("Staring Element: "+qName+" TreeLevel: "+treeLevel);

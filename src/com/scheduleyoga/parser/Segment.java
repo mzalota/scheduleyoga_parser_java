@@ -132,17 +132,8 @@ public class Segment {
 				continue;
 			}
 			
-			List<HtmlElement> leafElements = getLeafElements(subRow);
-			List<String> parts = new ArrayList<String>();
-			for (final HtmlElement leaf : leafElements){   
-				
-				SAXParserExample tmpParserExample = new SAXParserExample();
-				String elementValue = tmpParserExample.parseDocument(leaf.asXml());
-				String txt = StringUtils.trim(leaf.asText());
-				if (!StringUtils.isBlank(txt)){
-					parts.add(txt);
-				}
-			}
+			
+			List<String> parts = buildParts(subRow);
 	
 			Helper helper = Helper.createNew();
 			List<String> eventParts = new ArrayList<String>();
@@ -164,6 +155,31 @@ public class Segment {
 		}
 		
 		return events;
+	}
+
+	/**
+	 * @param leafElements
+	 * @return
+	 */
+	protected List<String> buildParts(HtmlElement subRow) {
+		
+		SAXParserExample tmpParserExample = new SAXParserExample();
+		String elementValue = tmpParserExample.parseDocument(subRow.asXml());
+		return tmpParserExample.getValues();
+		
+//		List<HtmlElement> leafElements = getLeafElements(subRow);
+//		List<String> parts = new ArrayList<String>();
+//		for (final HtmlElement leaf : leafElements){   
+//			
+//			SAXParserExample tmpParserExample = new SAXParserExample();
+//			String elementValue = tmpParserExample.parseDocument(leaf.asXml());
+//			String txt = StringUtils.trim(elementValue);
+//			//String txt = StringUtils.trim(leaf.asText());
+//			if (!StringUtils.isBlank(txt)){
+//				parts.add(txt);
+//			}
+//		}
+//		return parts;
 	}
 
 	/**
@@ -208,7 +224,12 @@ public class Segment {
 		Iterator<HtmlElement> iter = children.iterator();
 		if (!iter.hasNext()){
 			//this elementParam does not have any children. return itself
-			retList.add(elementParam);
+			SAXParserExample tmpParserExample = new SAXParserExample();
+			String elementValue = tmpParserExample.parseDocument(elementParam.asXml());
+			elementValue = StringUtils.trim(elementValue);
+			if (!StringUtils.isBlank(elementValue)){
+				retList.add(elementParam);
+			}
 			return retList;
 		}		
 		
