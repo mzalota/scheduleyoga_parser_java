@@ -1,7 +1,20 @@
 package com.scheduleyoga.parser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Studio {
 
+	static public final int STUDIO_ID_BABTISTE = 1;  
+	static public final int STUDIO_ID_KAIAYOGA = 2;  
+	static public final int STUDIO_ID_JOSCHI_NYC = 3;  
+	static public final int STUDIO_ID_JIVAMUKTIYOGA = 4;  
+	static public final int STUDIO_ID_LAUGHING_LOTUS = 5;
+	static public final int STUDIO_ID_OM_YOGA = 6;
+	
+	protected Map<String, String> xPathMap = new HashMap<String, String>();
+	protected Map<String, String> scheduleURL = new HashMap<String, String>();
+	
 	protected int id;
 	protected String name; 
 	protected String url;
@@ -11,9 +24,9 @@ public class Studio {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public static Studio createNew(){
+	public static Studio createNew(int idParam){
 		Studio newObj = new Studio();
-		
+		newObj.setId(idParam);
 		return newObj;
 	}
 

@@ -48,7 +48,7 @@ public class Segment {
 		this.element = element;
 	}
 
-	public List<Segment> getRows() {
+	protected List<Segment> getRows() {
 		if (element.getClass() == HtmlTable.class) {
 			HtmlTable table = (HtmlTable) element;
 			
@@ -58,12 +58,6 @@ public class Segment {
 			}
 			return rows;
 		}
-				
-//		if (HtmlTableCell.class.isAssignableFrom(element.getClass())) {
-//			HtmlTableCell cell = (HtmlTableCell) element;
-//			List<HtmlElement> pElements = cell.getHtmlElementsByTagName("p");
-//			return buildList(pElements);
-//		}
 		
 		return Collections.EMPTY_LIST;
 	}
@@ -78,7 +72,7 @@ public class Segment {
 		return segList;
 	}
 	
-	public List<Segment> getCells() {
+	protected List<Segment> getCells() {
 		HtmlTableRow httpRow = (HtmlTableRow) element;
 		
 		List<Segment> cells = new ArrayList<Segment> (httpRow.getCells().size());
@@ -95,7 +89,7 @@ public class Segment {
 			output = output+"<tr style=\"border: 1px solid red;\">";
 			for (final Segment cell : row.getCells()){
 				output = output+"<td style=\"border: 1px solid red;\">";
-				if (!cell.isBlank()){ //cell != null &&
+				if (!cell.isBlank()){ 
 					List<Event> events = eventsFromCell(cell.getElement());
 					output = output+buildHTMLForEvents(events);
 				}				
@@ -108,21 +102,13 @@ public class Segment {
 
 	}
 	
-	public List<Event> eventsFromCell(HtmlElement elementParam) {
+	protected List<Event> eventsFromCell(HtmlElement elementParam) {
 		
 		List<Event> events = new ArrayList<Event>();
 		
 		if (!HtmlTableCell.class.isAssignableFrom(elementParam.getClass())) {
 			return events;
 		}
-		
-//		HtmlTableCell cell = (HtmlTableCell) element;
-//		List<HtmlElement> pElements = cell.getHtmlElementsByTagName("p");			 		
-//		if (pElements.size() <= 0) {
-//			//This cell does not have <p> tags, so it probably has zero or just one event
-//			pElements.add(element);  
-//				//cell.getHtmlElementsByTagName(HtmlBreak.TAG_NAME);
-//		}
 		
 		List<HtmlElement> pElements = new ArrayList<HtmlElement>();
 		pElements.add(elementParam);
@@ -131,7 +117,6 @@ public class Segment {
 			if (subRow == null){
 				continue;
 			}
-			
 			
 			List<String> parts = buildParts(subRow);
 	
@@ -163,23 +148,10 @@ public class Segment {
 	 */
 	protected List<String> buildParts(HtmlElement subRow) {
 		
-		SAXParserExample tmpParserExample = new SAXParserExample();
-		String elementValue = tmpParserExample.parseDocument(subRow.asXml());
-		return tmpParserExample.getValues();
+		ElementParser textExtractor = new ElementParser();
+		textExtractor.parseDocument(subRow.asXml());
+		return textExtractor.getValues();
 		
-//		List<HtmlElement> leafElements = getLeafElements(subRow);
-//		List<String> parts = new ArrayList<String>();
-//		for (final HtmlElement leaf : leafElements){   
-//			
-//			SAXParserExample tmpParserExample = new SAXParserExample();
-//			String elementValue = tmpParserExample.parseDocument(leaf.asXml());
-//			String txt = StringUtils.trim(elementValue);
-//			//String txt = StringUtils.trim(leaf.asText());
-//			if (!StringUtils.isBlank(txt)){
-//				parts.add(txt);
-//			}
-//		}
-//		return parts;
 	}
 
 	/**
@@ -224,7 +196,7 @@ public class Segment {
 		Iterator<HtmlElement> iter = children.iterator();
 		if (!iter.hasNext()){
 			//this elementParam does not have any children. return itself
-			SAXParserExample tmpParserExample = new SAXParserExample();
+			ElementParser tmpParserExample = new ElementParser();
 			String elementValue = tmpParserExample.parseDocument(elementParam.asXml());
 			elementValue = StringUtils.trim(elementValue);
 			if (!StringUtils.isBlank(elementValue)){
@@ -233,7 +205,7 @@ public class Segment {
 			return retList;
 		}		
 		
-		SAXParserExample tmpParserExample = new SAXParserExample();
+		ElementParser tmpParserExample = new ElementParser();
 		String elementValue = tmpParserExample.parseDocument(elementParam.asXml());
 		
 		if (!StringUtils.isBlank(elementValue)){
@@ -248,46 +220,6 @@ public class Segment {
 		return retList;
 	}
 	
-	
-	protected List<String> breakIntoParts(HtmlElement elementParam) {
-		
-		//TODO:: FIXXX THIS. IT DOES NOT WORK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		Iterable<HtmlElement> children = elementParam.getChildElements();
-		Iterator<HtmlElement> iter = children.iterator();
-		List<String> parts = new ArrayList<String>(3);		
-		while (iter.hasNext()){
-			HtmlElement child = iter.next();
-			if (child != null){
-				if (!StringUtils.isBlank(StringUtils.trim(child.asText()))){
-					parts.add(StringUtils.trim(child.asText()));
-				} 
-			}
-		}
-		return parts;
-	}	
-	
-//	protected List<String> breakIntoParts(HtmlElement elementParam) {
-//		Iterable<HtmlElement> children = elementParam.getChildElements();
-//		Iterator<HtmlElement> iter = children.iterator();
-//		List<String> parts = new ArrayList<String>(3);
-//		String currentPart = "";		
-//		while (iter.hasNext()){
-//			HtmlElement child = iter.next();
-//			if (child != null){
-//				System.out.println("element:"+child.toString()+" : "+child.asText());
-//				System.out.println("tagName: "+child.getTagName()+" const is "+HtmlBreak.TAG_NAME);
-//				if (child.getTagName().equals(HtmlBreak.TAG_NAME)){
-//					parts.add(currentPart);
-//					System.out.println("currentPart is: "+currentPart);
-//					currentPart = "";
-//				} else {
-//					currentPart = currentPart+" "+child.asText();
-//				}
-//			}
-//		}
-//		System.out.println("parts are now: "+parts.toString());
-//		return parts;
-//	}
 	
 	public boolean isBlank() {
 		if (element == null){

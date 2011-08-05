@@ -146,6 +146,19 @@ public class Parser {
 		return "";
 	}
 	
+	public String parseStudioSite(Studio studio) throws IOException{
+		
+		studioID = studio.getName();
+		switch (studio.getId()) {
+			case Studio.STUDIO_ID_OM_YOGA:
+				return parseOmYoga();
+			case Studio.STUDIO_ID_BABTISTE:
+				return parseMindAndBodyOnline2();
+		}
+		return "";
+	}
+	
+	
 	protected int studioIDFromStudioName(String studioName){		
 		return studioIDNameMap.get(studioName);
 	}
@@ -164,61 +177,22 @@ public class Parser {
     	}
     	return true;
 	}
-	
-	protected String parseOmYoga() throws FailingHttpStatusCodeException, IOException{
-		
-		Studio studio = getStudio();
-			
-		WebClient webClient = new WebClient();
-        URL url = new URL(studio.getUrl()); 
-		
-        HtmlPage page = (HtmlPage) webClient.getPage(url);
-        HtmlTable table = (HtmlTable) page.getByXPath(studio.getxPath()).get(0);
-        
-        Segment calendarSegment = Segment.createNewFromElement(table);
-        System.out.println("The table is: "+calendarSegment);                
-        
-        return calendarSegment.asHTMLTable();
-        
-//        for (final Segment row : calendarSegment.getRows()){
-//        	System.out.println("row is: "+row);
-//        	for (final Segment cell : row.getCells()){      
-//        		if (cell == null){
-//        			continue;
-//        		}
-//        		if (!cell.isBlank()){
-//        			System.out.println(" Cell content: ");
-//        		}
-//        		
-//        		for (final Segment subRow : cell.getRows()){     
-//        			if (subRow == null){
-//        				continue;
-//        			}
-//        			if (subRow.isBlank()){
-//        				continue;
-//        			}
-//        			System.out.println(" subRow is: " + StringUtils.trim(subRow.asText()));
-//        		}
-//
-//        	}
-//        }
 
-	}
 
 	/**
 	 * 
 	 * @return Studio
 	 */
-	public Studio getStudio() {
-		Studio studio = Studio.createNew();
+	public Studio getStudio(String studioName) {
+		Studio studio = Studio.createNew(studioIDFromStudioName(studioName));
         
-		studio.setId(studioIDFromStudioName(studioID));
-		studio.setName(studioID);
+		//studio.setId();
+		studio.setName(studioName);
 		
-        String urlStr = scheduleURL.get(studioID);
+        String urlStr = scheduleURL.get(studioName);
         studio.setUrl(urlStr);
         
-        String xPathParam = xPath.get(studioID); 
+        String xPathParam = xPath.get(studioName); 
         studio.setxPath(xPathParam);
         
         return studio;
@@ -362,7 +336,53 @@ public class Parser {
 			System.out.println(" Columns: " + cell.asText());
 		}
 	}
+	
+	protected String parseOmYoga() throws FailingHttpStatusCodeException, IOException{
+		
+		Studio studio = getStudio(studioID);
+			
+		WebClient webClient = new WebClient();
+        URL url = new URL(studio.getUrl()); 
+		
+        HtmlPage page = (HtmlPage) webClient.getPage(url);
+        HtmlTable table = (HtmlTable) page.getByXPath(studio.getxPath()).get(0);
+        
+        Segment calendarSegment = Segment.createNewFromElement(table);
+        System.out.println("The table is: "+calendarSegment);                
+        
+        return calendarSegment.asHTMLTable();
+	}
 
+	protected String parseMindAndBodyOnline2() throws FailingHttpStatusCodeException, IOException {
+		Studio studio = getStudio(studioID);
+		
+		WebClient webClient = new WebClient();
+        URL url = new URL(studio.getUrl());
+        
+        HtmlPage pageOuter;
+        System.out.println("Loading Page 1");
+        pageOuter = (HtmlPage)webClient.getPage(url);
+        List<FrameWindow> frames = pageOuter.getFrames();        
+        HtmlPage page = (HtmlPage) frames.get(1).getEnclosedPage();
+        
+        
+        String xPathParam = xPath.get(studioID); 
+        HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
+        return parseTable2(table);
+        
+        //return "";
+	}
+	
+
+	private String parseTable2(HtmlTable table) {
+				
+		Segment calendarSegment = Segment.createNewFromElement(table);
+		return calendarSegment.asHTMLTable();
+		
+	}
+
+
+	
 	/**
 	 * @throws MalformedURLException
 	 * @throws IOException
@@ -424,12 +444,8 @@ public class Parser {
 		Map<Integer,Integer> columnsWithTime = new HashMap<Integer, Integer>();// = Collections.emptyList();
 		for (final HtmlTableRow row : table.getRows()) {
 			rowCount++;
-            //System.out.println("Found row: "+rowCount);
-            //System.out.println("value: "+row.toString());
             List<HtmlTableCell> cells = row.getCells();
           
-            //determineColumnMeaning(rowCount, rowsWithDate, columnsWithTime, row);
-            
             if (cells.size()<= timeCellNum) {
             	continue;
             }
@@ -449,9 +465,7 @@ public class Parser {
 					e.printStackTrace();
 					System.out.println("formatter did not work -"+time+"-");
 					System.exit(0);
-					
 				}            	
-            	
             	System.out.println(time);
             	continue;
             }
@@ -465,23 +479,7 @@ public class Parser {
             String location = cells.get(locationCellNum).asText();
             
             System.out.println(time+", "+className+", "+instructor+", "+location);
-            
-          
         }
-		
-//		System.out.println(" time In columns: ");
-//		Iterator<Integer> iter = columnsWithTime.keySet().iterator();
-//		while(iter.hasNext()){
-//			System.out.print(": " + iter.next()+" ");
-//		}
-//		
-//		System.out.println(" Rows with Dates: ");
-//		Set<Integer> dateRows = new TreeSet<Integer>(rowsWithDate.keySet());
-//		Iterator<Integer> iterDate = dateRows.iterator();
-//		while(iterDate.hasNext()){
-//			System.out.print(": " + iterDate.next()+" ");
-//		}
-		
 		System.out.println("Done");
 	}
 
