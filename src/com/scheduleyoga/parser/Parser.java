@@ -369,16 +369,11 @@ public class Parser {
         String xPathParam = xPath.get(studioID); 
         HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
         return parseTable2(table);
-        
-        //return "";
 	}
 	
-
-	private String parseTable2(HtmlTable table) {
-				
+	private String parseTable2(HtmlTable table) {			
 		Segment calendarSegment = Segment.createNewFromElement(table);
-		return calendarSegment.asHTMLTable();
-		
+		return calendarSegment.asHTMLTable_horizontal();		
 	}
 
 

@@ -91,6 +91,7 @@ public class Segment {
 				output = output+"<td style=\"border: 1px solid red;\">";
 				if (!cell.isBlank()){ 
 					List<Event> events = eventsFromCell(cell.getElement());
+					saveEventsToDB(events);
 					output = output+buildHTMLForEvents(events);
 				}				
 				output = output+"</td>";
@@ -99,8 +100,26 @@ public class Segment {
 		}
 		output = output+"</table>";
 		return output;
-
 	}
+	
+	public String asHTMLTable_horizontal(){
+		String output = "<table>";
+		for (final Segment row : this.getRows()){
+			output = output+"<tr style=\"border: 1px solid red;\">";
+			//for (final Segment cell : row.getCells()){
+				output = output+"<td style=\"border: 1px solid red;\">";
+				if (!row.isBlank()){ 
+					List<Event> events = eventsFromCell(row.getElement());
+					output = output+buildHTMLForEvents(events);
+				}				
+				output = output+"</td>";
+			//}
+			output = output+"</tr>\n";
+		}
+		output = output+"</table>";
+		return output;
+	}
+	
 	
 	protected List<Event> eventsFromCell(HtmlElement elementParam) {
 		
@@ -154,6 +173,15 @@ public class Segment {
 		
 	}
 
+	/**
+	 * @param events
+	 */
+	protected void saveEventsToDB(List<Event> events) {
+		for (final Event event : events){ 
+			event.saveToDB();
+		}
+	}
+	
 	/**
 	 * @param events
 	 * @return String output
