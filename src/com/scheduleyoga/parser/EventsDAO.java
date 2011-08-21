@@ -11,11 +11,16 @@ import com.scheduleyoga.parser.Event;
 
 public class EventsDAO {
 
+	static public SessionFactory sessionFactory = null;
+	
 	@SuppressWarnings("deprecation")
 	public void store(Event event){
 		Configuration config = new AnnotationConfiguration().configure();
 		// .addResource("Item.hbm.xml")
-		SessionFactory sessionFactory = config.buildSessionFactory();
+		
+		if (sessionFactory == null){
+			sessionFactory = config.buildSessionFactory();
+		}
 		Session session = sessionFactory.openSession();
 		Transaction tx = session.getTransaction();
 		try {

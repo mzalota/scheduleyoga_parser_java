@@ -17,7 +17,10 @@ import com.gargoylesoftware.htmlunit.html.HTMLParser;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.scheduleyoga.parser.Event;
+import com.scheduleyoga.parser.EventsParser;
+import com.scheduleyoga.parser.Parser;
 import com.scheduleyoga.parser.Segment;
+import com.scheduleyoga.parser.Parser.EventsParser_OmYoga;
 
 public class SegmentTest {
 
@@ -82,8 +85,9 @@ public class SegmentTest {
 		
 		HtmlElement element = createHtmlElement(xmlSample);
 
-		Segment segment = Segment.createNewFromElement(element);
-		List<Event> events = segment.eventsFromCell(element);
+		EventsParser eventParser = new Parser().new EventsParser_OmYoga();
+		Segment segment = Segment.createNewFromElement(element,eventParser);
+		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
 		assertEquals("5:30", events.get(0).getStartTimeStr());
@@ -107,8 +111,9 @@ public class SegmentTest {
 		
 		HtmlElement element = createHtmlElement(xmlSample);
 
-		Segment segment = Segment.createNewFromElement(element);
-		List<Event> events = segment.eventsFromCell(element);
+		EventsParser eventParser = new Parser().new EventsParser_OmYoga();
+		Segment segment = Segment.createNewFromElement(element,eventParser);
+		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
 		assertEquals("meditation", events.get(0).getComment());
@@ -135,8 +140,9 @@ public class SegmentTest {
 		
 		HtmlElement element = createHtmlElement(xmlSample);
 
-		Segment segment = Segment.createNewFromElement(element);
-		List<Event> events = segment.eventsFromCell(element);
+		EventsParser eventParser = new Parser().new EventsParser_OmYoga();
+		Segment segment = Segment.createNewFromElement(element,eventParser);
+		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
 		assertEquals("5:30", events.get(0).getStartTimeStr());
@@ -160,8 +166,9 @@ public class SegmentTest {
 		
 		HtmlElement element = createHtmlElement(xmlSample);
 
-		Segment segment = Segment.createNewFromElement(element);
-		List<Event> events = segment.eventsFromCell(element);
+		EventsParser eventParser = new Parser().new EventsParser_OmYoga();
+		Segment segment = Segment.createNewFromElement(element,eventParser);
+		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
 		assertEquals("6:00", events.get(0).getStartTimeStr());
@@ -197,8 +204,9 @@ public class SegmentTest {
 		
 		HtmlElement element = createHtmlElement(xmlSample);
 
-		Segment segment = Segment.createNewFromElement(element);
-		List<Event> events = segment.eventsFromCell(element);
+		EventsParser eventParser = new Parser().new EventsParser_OmYoga();
+		Segment segment = Segment.createNewFromElement(element,eventParser);
+		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(4, events.size());
 	}

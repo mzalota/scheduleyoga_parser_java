@@ -347,12 +347,16 @@ public class Parser {
         HtmlPage page = (HtmlPage) webClient.getPage(url);
         HtmlTable table = (HtmlTable) page.getByXPath(studio.getxPath()).get(0);
         
-        Segment calendarSegment = Segment.createNewFromElement(table);
+        EventsParser eventParser = new EventsParser_OmYoga();
+        
+        Segment calendarSegment = Segment.createNewFromElement(table, eventParser);
         System.out.println("The table is: "+calendarSegment);                
         
-        return calendarSegment.asHTMLTable();
+        List<List<List<Event> > > allEvents = calendarSegment.extractEvents();
+        
+        return eventParser.asHTMLTable(allEvents);
 	}
-
+	
 	protected String parseMindAndBodyOnline2() throws FailingHttpStatusCodeException, IOException {
 		Studio studio = getStudio(studioID);
 		
@@ -371,8 +375,11 @@ public class Parser {
         return parseTable2(table);
 	}
 	
-	private String parseTable2(HtmlTable table) {			
-		Segment calendarSegment = Segment.createNewFromElement(table);
+	private String parseTable2(HtmlTable table) {	
+		
+		EventsParser eventParser = new EventsParser_OmYoga();
+		
+		Segment calendarSegment = Segment.createNewFromElement(table, eventParser);
 		return calendarSegment.asHTMLTable_horizontal();		
 	}
 
@@ -633,29 +640,11 @@ public class Parser {
         return null;
     }
 	
-//	public static void main(String[] args) throws IOException, SAXException {
-//		WebConversation wc = new WebConversation();
-//	    WebRequest     req = new GetMethodWebRequest( "https://clients.mindbodyonline.com/ASP/home.asp?studioid=2148" );
-//	    WebResponse   resp = wc.getResponse( req );
-//	    
-//	    Document doc = resp.getDOM();
-//	    System.out.println(xmlToString(doc));
-//	    
-//	}
 	
 
 	public static void main2(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-//
-//		HttpClient client = new HttpClient();
-//		HttpHead method = new HttpHead("http://www.google.com");
-//		int responseCode = client.executeMethod(method);
-//		if (responseCode != 200) {
-//		    throw new HttpException("HttpMethod Returned Status Code: " + responseCode + " when attempting: " + url);
-//		}
-//		String rtn = StringEscapeUtils.unescapeHtml(method.getResponseBodyAsString());
-//		
-		
+
 		HttpClient httpclient = new DefaultHttpClient();
 		HttpGet httpget = new HttpGet("https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=5/1/2011&loc=1&page=1&pMode=&prodid=&stype=-7&classid=0&catid=&justloggedin=");
 		//https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=5/1/2011&loc=1&page=1&pMode=&prodid=&stype=-7&classid=0&catid=&justloggedin=
@@ -664,65 +653,13 @@ public class Parser {
 			HttpResponse response = httpclient.execute(httpget);		
 			HttpEntity entity = response.getEntity();
 			
-//			// If the response does not enclose an entity, there is no need
-//			// to worry about connection release
-//			if (entity != null) {
-//			    InputStream instream = entity.getContent();
-//			    try {
-//
-//			        BufferedReader reader = new BufferedReader(
-//			                new InputStreamReader(instream));
-//			        // do something useful with the response
-//			        System.out.println(reader.readLine());
-//
-//			    } catch (IOException ex) {
-//
-//			        // In case of an IOException the connection will be released
-//			        // back to the connection manager automatically
-//			        throw ex;
-//
-//			    } catch (RuntimeException ex) {
-//
-//			        // In case of an unexpected exception you may want to abort
-//			        // the HTTP request in order to shut down the underlying
-//			        // connection and release it back to the connection manager.
-//			        httpget.abort();
-//			        throw ex;
-//
-//			    } finally {
-//
-//			        // Closing the input stream will trigger connection release
-//			        instream.close();
-//
-//			    }
-//			}
-			
-			
-			
 			if (entity != null) {
 				
 			    InputStream instream = entity.getContent();
 			
 			    StringWriter writer = new StringWriter();
 			    IOUtils.copy(instream, writer);
-			    //String theString = writer.toString();
-			    
-			    
-//			    Reader reader = new BufferedReader(
-//			    		new InputStreamReader(instream, "ISO-8859-1")); //"UTF-8"
-//			    Writer writer = new StringWriter();
-//			    int n;
-//			    char[] buffer = new char[1024];
-//			    while ((n = reader.read(buffer)) != -1) {
-//			    	writer.write(buffer, 0, n);
-//			    }
-			    
-//			    int l;
-//			    byte[] tmp = new byte[2048];
-//			    while ((l = instream.read(tmp)) != -1) {
-//			    	System.out.println("bytes read: "+l );
-//			    	writer.write(tmp, 0, l);
-//			    }
+
 			    instream.close();
 			    System.out.println(writer.toString());
 			}
@@ -736,5 +673,103 @@ public class Parser {
 		
 	}
 
-	
+	public class EventsParser_OmYoga implements EventsParser {
+		public String tmpVar;
+		public int colNum;
+
+		public int getColumnNumber() {
+			return colNum;
+		}
+
+		public void setColumnNumber(int colNum) {
+			this.colNum = colNum;
+		}
+
+		public EventsParser_OmYoga() {
+		}
+
+		/**
+		 * @param parts
+		 */
+		public Event createEventFromParts(List<String> parts) {
+			if (parts.size() <= 0) {
+				return null;
+			}
+			Event event = Event.createNew();
+			Date startTime = convertStrToDate(parts.get(0));
+			//event.setStartTimeStr(parts.get(0));
+			event.setStartTime(startTime);
+			parts.remove(0);
+
+			if (parts.size() > 1 ){
+				event.setInstructorName(parts.get(parts.size()-1));
+				parts.remove(parts.size()-1);
+			}
+			
+			String txt3 = StringUtils.join(parts.toArray(), " ");
+			event.setComment(txt3);
+			
+			return event;
+		}
+		
+		@Override
+		public String asHTMLTable(List<List<List<Event> > > allEvents) {
+			String output = "<table>";
+			for (int rowNum = 0; rowNum < allEvents.size(); rowNum++) {
+				output = output + "<tr style=\"border: 1px solid red;\">";
+				for (int colNum=0; colNum < allEvents.get(rowNum).size(); colNum++) {
+					output = output + "<td style=\"border: 1px solid red;\">";
+					for (int eventNum = 0; eventNum < allEvents.get(rowNum).get(colNum).size(); eventNum++){
+						Event event = allEvents.get(rowNum).get(colNum).get(eventNum);
+						//save event to DB
+						event.saveToDB();
+						//createHTML
+						output = output + buildHTMLForEvent(event);
+					}
+					output = output + "</td>";
+				}
+				output = output + "</tr>\n";
+			}
+			output = output + "</table>";
+			return output;
+		}
+		
+		/**
+		 * @param events
+		 * @return String output
+		 */
+		public String buildHTMLForEvent(Event event) {
+			
+			if (null == event){
+				return "";
+			}
+			
+			String output = "";
+			output = output + "<div style=\"color: red\">" + event.getStartTimeStr() + "</div> <br/>";
+			output = output + "<div style=\"color: blue\">" + event.getComment()+ "</div> <br/>";
+			output = output + "<div style=\"color: black\">" + event.getInstructorName() + "</div> <br/>";
+			output = output + "<hr />";
+
+			return output;
+		}
+		
+		protected Date convertStrToDate(String startTimeStr) {
+			
+			Date eventDate = Helper.createNew().nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
+			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(eventDate); 			
+			
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+			Date dt;
+			try {
+				String dateStr = eventDateStr+" "+startTimeStr;
+				dt = (Date)formatter.parse(dateStr);
+				return dt;
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+	}
 }

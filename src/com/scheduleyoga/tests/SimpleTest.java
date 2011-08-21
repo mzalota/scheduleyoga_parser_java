@@ -1,5 +1,10 @@
 package com.scheduleyoga.tests;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 import com.scheduleyoga.parser.Helper;
 import com.scheduleyoga.parser.Parser;
 
@@ -143,6 +148,171 @@ public class SimpleTest extends TestCase {
 	}	
 	
 	
+	public void testnextDateFromDayOfTheWeek_todayIsThu() throws ParseException {
+		
+		//SETUP
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Date testTodayDate = (Date)formatter.parse("2011-08-11"); //"today" is Thursday		
+
+		int TEST_DAYOFWEEK_SUN = Calendar.SUNDAY; //Sunday
+		String expectedDate_SUN = "2011-08-14"; //This is Sunday
+		
+		int TEST_DAYOFWEEK_THU = Calendar.THURSDAY; 
+		String expectedDate_THU = "2011-08-11"; 
+		
+		int TEST_DAYOFWEEK_MON = Calendar.MONDAY; 
+		String expectedDate_MON = "2011-08-15"; 
+		
+		int TEST_DAYOFWEEK_FRI = Calendar.FRIDAY; 
+		String expectedDate_FRI = "2011-08-12"; 
+		
+		//EXECUTE
+		Parser parser = new Parser();
+		Date result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_SUN, testTodayDate);
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(expectedDate_SUN, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_THU, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_THU, formatter.format(result));
+		
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_MON, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_MON, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_FRI, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_FRI, formatter.format(result));
+	}
+	
+	public void testnextDateFromDayOfTheWeek_todayIsMon() throws ParseException {
+		
+		//SETUP
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Date testTodayDate = (Date)formatter.parse("2011-08-08"); //"today" is Monday		
+
+		int TEST_DAYOFWEEK_SUN = Calendar.SUNDAY; //Sunday
+		String expectedDate_SUN = "2011-08-14"; //This is Sunday
+		
+		int TEST_DAYOFWEEK_THU = Calendar.THURSDAY; 
+		String expectedDate_THU = "2011-08-11"; 
+		
+		int TEST_DAYOFWEEK_MON = Calendar.MONDAY; 
+		String expectedDate_MON = "2011-08-08"; 
+		
+		int TEST_DAYOFWEEK_FRI = Calendar.FRIDAY; 
+		String expectedDate_FRI = "2011-08-12"; 
+		
+		//EXECUTE
+		Parser parser = new Parser();
+		Date result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_SUN, testTodayDate);
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(expectedDate_SUN, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_THU, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_THU, formatter.format(result));
+		
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_MON, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_MON, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_FRI, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_FRI, formatter.format(result));
+	}
+	
+	
+	public void testnextDateFromDayOfTheWeek_todayIsSun() throws ParseException {
+		
+		//SETUP
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Date testTodayDate = (Date)formatter.parse("2011-08-07"); //"today" is Sunday		
+
+		int TEST_DAYOFWEEK_SUN = Calendar.SUNDAY; //Sunday
+		String expectedDate_SUN = "2011-08-07"; //This is Sunday
+		
+		int TEST_DAYOFWEEK_THU = Calendar.THURSDAY; 
+		String expectedDate_THU = "2011-08-11"; 
+		
+		int TEST_DAYOFWEEK_MON = Calendar.MONDAY; 
+		String expectedDate_MON = "2011-08-08"; 
+		
+		int TEST_DAYOFWEEK_FRI = Calendar.FRIDAY; 
+		String expectedDate_FRI = "2011-08-12"; 
+		
+		//EXECUTE
+		Parser parser = new Parser();
+		Date result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_SUN, testTodayDate);
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(expectedDate_SUN, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_THU, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_THU, formatter.format(result));
+		
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_MON, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_MON, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_FRI, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_FRI, formatter.format(result));
+	}	
+	
+	
+	public void testnextDateFromDayOfTheWeek_todayIsSat() throws ParseException {
+		
+		//SETUP
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Date testTodayDate = (Date)formatter.parse("2011-08-06"); //"today" is Sunday		
+
+		int TEST_DAYOFWEEK_SUN = Calendar.SUNDAY; //Sunday
+		String expectedDate_SUN = "2011-08-07"; //This is Sunday
+		
+		int TEST_DAYOFWEEK_THU = Calendar.THURSDAY; 
+		String expectedDate_THU = "2011-08-11"; 
+		
+		int TEST_DAYOFWEEK_MON = Calendar.MONDAY; 
+		String expectedDate_MON = "2011-08-08"; 
+		
+		int TEST_DAYOFWEEK_FRI = Calendar.FRIDAY; 
+		String expectedDate_FRI = "2011-08-12"; 
+		
+		int TEST_DAYOFWEEK_SAT = Calendar.SATURDAY; 
+		String expectedDate_SAT = "2011-08-06"; 
+		
+		//EXECUTE
+		Parser parser = new Parser();
+		Date result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_SUN, testTodayDate);
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(expectedDate_SUN, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_THU, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_THU, formatter.format(result));
+		
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_MON, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_MON, formatter.format(result));
+
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_FRI, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_FRI, formatter.format(result));
+		
+		result = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_SAT, testTodayDate);
+		assertNotNull(result);
+		assertEquals(expectedDate_SAT, formatter.format(result));
+		
+	}		
 	//	public void testDivideByZero() {
 //		int zero= 0;
 //		int result= 8/zero;
