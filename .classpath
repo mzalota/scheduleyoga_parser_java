@@ -8,5 +8,7 @@
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="C:/jboss/client/ejb3-persistence.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Hibernate"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/libs/mysql-connector-java-5.1.10/mysql-connector-java-5.1.10-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

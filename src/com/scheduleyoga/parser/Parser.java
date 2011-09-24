@@ -43,14 +43,21 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.w3c.dom.Node;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.IncorrectnessListener;
+import com.gargoylesoftware.htmlunit.ScriptException;
+import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.FrameWindow;
+import com.gargoylesoftware.htmlunit.html.HTMLParserListener;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlLabel;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
+import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
+//import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
+
 import com.scheduleyoga.dao.DBAccess;
 import com.scheduleyoga.dao.ParsingHistory;
 import com.scheduleyoga.dao.Studio;
@@ -385,26 +392,101 @@ public class Parser {
 	}
 	
 	protected String parseMindAndBodyOnline2(Studio studio) throws FailingHttpStatusCodeException, IOException {
-		
+
+		//		final HTMLParserListener collecter = new HTMLParserListener() {
+		//
+		//			public void error(final String message, final URL url,
+		//					final int line, final int column, final String key) {
+		//				messages.add(new MessageInfo(true, message, url, line, column, key));
+		//			}
+		//
+		//			public void warning(final String message, final URL url,
+		//					final int line, final int column, final String key) {
+		//				messages.add(new MessageInfo(false, message, url, line, column, key));
+		//			}
+		//		};
+		//		webClient.setHTMLParserListener(collecter);
+
+
+		System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "error");
+
 		WebClient webClient = new WebClient();
+		webClient.setCssEnabled(false);
+		//webClient.setJavaScriptEnabled(false);
+		webClient.setThrowExceptionOnFailingStatusCode(false);
+		webClient.setThrowExceptionOnScriptError(false);
+
+
+		webClient.setIncorrectnessListener(new IncorrectnessListener() {
+			@Override
+			public void notify(String arg0, Object arg1) {
+				// TODO Auto-generated method stub
+			}
+		});
+
+		webClient.setCssErrorHandler(new SilentCssErrorHandler());		
+
+		webClient.setHTMLParserListener(new HTMLParserListener() {
+			@Override
+			public void warning(String arg0, URL arg1, int arg2, int arg3, String arg4) {
+				// TODO Auto-generated method stub
+			}
+			@Override
+			public void error(String arg0, URL arg1, int arg2, int arg3, String arg4) {
+				// TODO Auto-generated method stub
+			}
+		});
+
+		webClient.setJavaScriptErrorListener(new JavaScriptErrorListener() {
+			@Override
+			public void timeoutError(HtmlPage arg0, long arg1, long arg2) {
+				// TODO Auto-generated method stub
+			}
+			@Override
+			public void scriptException(HtmlPage arg0, ScriptException arg1) {
+				// TODO Auto-generated method stub
+			}
+			@Override
+			public void malformedScriptURL(HtmlPage arg0, String arg1, MalformedURLException arg2) {
+				// TODO Auto-generated method stub
+			}
+			@Override
+			public void loadScriptError(HtmlPage arg0, URL arg1, Exception arg2) {
+				// TODO Auto-generated method stub
+			}
+		});
+		
         URL url = new URL(studio.getUrlSchedule());
         
         HtmlPage pageOuter;
         System.out.println("Loading Page 1");
-        pageOuter = (HtmlPage)webClient.getPage(url);
+        pageOuter = (HtmlPage)webClient.getPage(url);        
+        //System.out.println("OUTER PAAGE");
+        //System.out.println(pageOuter.asXml());
+        
         List<FrameWindow> frames = pageOuter.getFrames();        
         HtmlPage page = (HtmlPage) frames.get(1).getEnclosedPage();
         
         System.out.println("THE WHOLE PAAGE");
         System.out.println(page.asXml());
         
+        System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "info");
+        
         String xPathParam = studio.getXpath(); //xPath.get(studioID); 
         
         System.out.println("XPath is: "+xPathParam);
         
-        HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
+        List<HtmlElement> elements = (List<HtmlElement>) page.getByXPath(xPathParam);
+                
+        if (elements.size() <=0 ){
+        	webClient.closeAllWindows();
+        	String msg = "COULD NOT FIND specified XPath: "+xPathParam;
+        	System.err.println(msg);
+        	return "</br><strong>"+msg+"</strong></br>";
+        }
+    	HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);        
+    	String calendarXHTML = table.asXml();
         
-        String calendarXHTML = table.asXml();
         
         System.out.println("JUST THE CALENDAR TABLE");
         System.out.println(calendarXHTML);

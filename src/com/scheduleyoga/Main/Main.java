@@ -24,8 +24,16 @@ import net.fortuna.ical4j.util.UidGenerator;
 import java.io.*;
 
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.ListIterator;
+import java.util.List;
 
+import org.springframework.beans.factory.xml.XmlBeanFactory;
+import org.springframework.core.io.ClassPathResource;
+
+//import antlr.collections.List;
+
+import com.scheduleyoga.dao.Studio;
 import com.scheduleyoga.parser.Parser;
 import com.scheduleyoga.tests.SimpleTest;
 
@@ -43,8 +51,15 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		//executeTests();
-		parse();
+		//parse();
+		
+		XmlBeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource("MainLoop.xml"));
+		
+		MainLoop myBean = (MainLoop) beanFactory.getBean("MainLoopBean");
+		myBean.refreshAllStudios(false);
 	}
+	
+	
 	
 	public static void parse() {	
 		

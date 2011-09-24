@@ -7,7 +7,15 @@
 	</configSuffixes>
 	<enableImports><![CDATA[false]]></enableImports>
 	<configs>
+		<config>src/MainLoop.xml</config>
 	</configs>
 	<configSets>
+		<configSet>
+			<name><![CDATA[max-bean-config-set]]></name>
+			<allowBeanDefinitionOverriding>true</allowBeanDefinitionOverriding>
+			<incomplete>false</incomplete>
+			<configs>
+			</configs>
+		</configSet>
 	</configSets>
 </beansProjectDescription>
