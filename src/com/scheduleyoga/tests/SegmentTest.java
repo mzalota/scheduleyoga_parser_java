@@ -2,11 +2,14 @@ package com.scheduleyoga.tests;
 
 import static org.junit.Assert.*;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 
 import org.junit.Test;
 import org.junit.internal.runners.TestMethod;
@@ -16,11 +19,15 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HTMLParser;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.scheduleyoga.parser.ElementParser;
 import com.scheduleyoga.parser.Event;
 import com.scheduleyoga.parser.EventsParser;
+import com.scheduleyoga.parser.ISegment;
 import com.scheduleyoga.parser.Parser;
 import com.scheduleyoga.parser.Segment;
+import com.scheduleyoga.parser.Parser.EventsParser_Baptista;
 import com.scheduleyoga.parser.Parser.EventsParser_OmYoga;
+import com.scheduleyoga.parser.SegmentHorizontal;
 
 public class SegmentTest {
 
@@ -69,7 +76,7 @@ public class SegmentTest {
 //		assertEquals(xmlSample, parsedXML);
 //	}
 	
-	//@Test
+	@Test
 	public void testEventsFromCell_singleElement() throws Exception {
 		
 		String xmlSample = "" +
@@ -90,11 +97,11 @@ public class SegmentTest {
 		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
-		assertEquals("5:30", events.get(0).getStartTimeStr());
+		assertEquals("05:30", events.get(0).getStartTimeStr());
 	}
 	
 	
-	//@Test
+	@Test
 	public void testEventsFromCell_twoElements() throws Exception {
 		
 		String xmlSample = "" +
@@ -145,7 +152,7 @@ public class SegmentTest {
 		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
-		assertEquals("5:30", events.get(0).getStartTimeStr());
+		assertEquals("05:30", events.get(0).getStartTimeStr());
 		//assertEquals("meditation $5", events.get(0).getComment());
 	}	
 	
@@ -171,12 +178,13 @@ public class SegmentTest {
 		List<Event> events = segment.eventsFromCell(element,0);
 		
 		assertEquals(1, events.size());
-		assertEquals("6:00", events.get(0).getStartTimeStr());
-		assertEquals("express<br/>eli", events.get(0).getComment());
+		assertEquals("06:00", events.get(0).getStartTimeStr());
+		assertEquals("express", events.get(0).getComment());
+		assertEquals("eli", events.get(0).getInstructorName());
 		//assertEquals("meditation $5", events.get(0).getComment());
 	}	
 	
-//	@Test
+	//@Test
 	public void testEventsFromCell_fourTextElements() throws Exception {
 		
 		String xmlSample = "" +
@@ -211,6 +219,80 @@ public class SegmentTest {
 		assertEquals(4, events.size());
 	}
 
+	@Test
+	public void testSegmentTest_NestedHTML() throws Exception {
+		String xmlSample = "" +
+		"	<td colspan=\"2\" class=\"textSmall\">\r\n" + 
+		"	  <a name=\"an1\">\r\n" + 
+		"	    <b>\r\n" + 
+		"	                           \r\n" + 
+		"	      <span class=\"headText\">\r\n" + 
+		"	                    Sun            \r\n" + 
+		"	      </span>\r\n" + 
+		"	                September 04, 2011        \r\n" + 
+		"	    </b>\r\n" + 
+		"	  </a>\r\n" + 
+		"	</td>";
+	
+		ElementParser textExtractor = new ElementParser();
+		textExtractor.parseDocument(xmlSample);
+		List<String> values = textExtractor.getValues();
+		
+		assertEquals(2, values.size());
+		
+//		HtmlElement element = createHtmlElement(xmlSample);
+//
+//		EventsParser eventParser = new Parser().new EventsParser_OmYoga();
+//		Segment segment = Segment.createNewFromElement(element,eventParser);
+//		List<Event> events = segment.eventsFromCell(element,0);
+//		
+//		assertEquals(1, events.size());
+//		assertEquals("meditation", events.get(0).getComment());
+	}
+	
+	@Test
+	public void testAaa_twoElements() throws Exception {
+				
+		//SETUP
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+		
+		FileInputStream fis = new FileInputStream("C:\\workspace_springsource\\SchYogaParser\\src\\com\\scheduleyoga\\tests\\babtiste_studio.html"); 
+		
+		StringBuilder text = new StringBuilder();
+		
+		Scanner scanner = new Scanner(fis);
+		try {
+		      while (scanner.hasNextLine()){
+		        text.append(scanner.nextLine());
+		      }
+		    }
+		    finally{
+		      scanner.close();
+		    }
+		String calendarXHtml = text.toString();
+		
+		HtmlElement element = createHtmlElement(calendarXHtml);
+
+		//String new Parser().parseTable2(element);
+		
+		//EXECUTE
+		EventsParser eventParser = new Parser().new EventsParser_Baptista();
+		SegmentHorizontal segment = (SegmentHorizontal) SegmentHorizontal.createNewFromElement(element, eventParser);
+		List<Event> events = segment.extractEvents();
+		
+		//System.out.println(events.toString());
+		
+		//ASSERT
+		assertEquals(71, events.size());
+		
+		Event lastEvent = events.get(67);
+		assertEquals("Samantha Moland (32)", lastEvent.getInstructorName());
+		assertEquals("All Levels Brookline", lastEvent.getComment());
+		
+		assertEquals("2011-09-04 16:30", formatter.format(lastEvent.getStartTime()));
+	}	
+
+	
 	/**
 	 * @param xmlSample
 	 * @return

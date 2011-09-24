@@ -8,5 +8,5 @@ public interface EventsParser {
 	
 	public void setColumnNumber (int columnNum);
 
-	public abstract String asHTMLTable(List<List<List<Event> > > allEvents);
+	//public abstract String asHTMLTable(List<List<List<Event> > > allEvents);
 }

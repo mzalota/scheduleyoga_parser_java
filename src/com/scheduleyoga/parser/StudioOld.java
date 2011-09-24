@@ -3,7 +3,7 @@ package com.scheduleyoga.parser;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Studio {
+public class StudioOld {
 
 	static public final int STUDIO_ID_BABTISTE = 1;  
 	static public final int STUDIO_ID_KAIAYOGA = 2;  
@@ -20,12 +20,12 @@ public class Studio {
 	protected String url;
 	protected String xPath;
 	
-	protected Studio() {
+	protected StudioOld() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public static Studio createNew(int idParam){
-		Studio newObj = new Studio();
+	public static StudioOld createNew(int idParam){
+		StudioOld newObj = new StudioOld();
 		newObj.setId(idParam);
 		return newObj;
 	}

@@ -124,8 +124,7 @@ public class SimpleTest extends TestCase {
 		String TEST_DATE = "  Sun May 15, 2011  ";
 		
 		//EXECUTE
-		Parser parser = new Parser();
-		boolean result = parser.containsDate(TEST_DATE);
+		boolean result = Helper.createNew().containsDate(TEST_DATE);
 		
 		//ASSERT
 		assertTrue(result);
@@ -138,9 +137,8 @@ public class SimpleTest extends TestCase {
 		String TEST_DATE_2 = "  Tuesday  ";
 		
 		//EXECUTE
-		Parser parser = new Parser();
-		boolean result1 = parser.containsDate(TEST_DATE_1);
-		boolean result2 = parser.containsDate(TEST_DATE_2);
+		boolean result1 = Helper.createNew().containsDate(TEST_DATE_1);
+		boolean result2 = Helper.createNew().containsDate(TEST_DATE_2);
 		
 		//ASSERT
 		assertTrue(result1);
@@ -312,7 +310,94 @@ public class SimpleTest extends TestCase {
 		assertNotNull(result);
 		assertEquals(expectedDate_SAT, formatter.format(result));
 		
+	}	
+	
+	public void testConvertSimpleTimeStrToDate_earlyMorning() {
+		
+		//Setup
+		SimpleDateFormat formatterTime = new SimpleDateFormat("h:mm"); //in 12 hour format
+		SimpleDateFormat formatterAmPm = new SimpleDateFormat("a"); //in 12 hour format
+		String TEST_TIME = "6:00";
+		
+		//Execute
+		Parser parser = new Parser();
+		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		
+		//Assert
+		assertNotNull(resultDate);
+		assertEquals(TEST_TIME, formatterTime.format(resultDate));
+		assertEquals("AM", formatterAmPm.format(resultDate));
+	}
+	
+	public void testConvertSimpleTimeStrToDate_earlyAfternoon_ampmParamIsTrue() {
+		
+		//Setup
+		SimpleDateFormat formatterTime = new SimpleDateFormat("h:mm"); //in 12 hour format
+		SimpleDateFormat formatterAmPm = new SimpleDateFormat("a"); //in 12 hour format
+		String TEST_TIME = "1:00";
+		
+		//Execute
+		Parser parser = new Parser();
+		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, true);
+		
+		//Assert
+		assertNotNull(resultDate);
+		assertEquals(TEST_TIME, formatterTime.format(resultDate));
+		assertEquals("PM", formatterAmPm.format(resultDate));
+	}	
+	
+	public void testConvertSimpleTimeStrToDate_earlyAfternoon_ampmParamIsFalse() {
+		
+		//Setup
+		SimpleDateFormat formatterTime = new SimpleDateFormat("h:mm"); //in 12 hour format
+		SimpleDateFormat formatterAmPm = new SimpleDateFormat("a"); //in 12 hour format
+		String TEST_TIME = "1:00";
+		
+		//Execute
+		Parser parser = new Parser();
+		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		
+		//Assert
+		assertNotNull(resultDate);
+		assertEquals(TEST_TIME, formatterTime.format(resultDate));
+		assertEquals("PM", formatterAmPm.format(resultDate));
 	}		
+
+	public void testConvertSimpleTimeStrToDate_afternoon_ampmParamIsFalse() {
+		
+		//Setup
+		SimpleDateFormat formatterTime = new SimpleDateFormat("h:mm"); //in 12 hour format
+		SimpleDateFormat formatterAmPm = new SimpleDateFormat("a"); //in 12 hour format
+		String TEST_TIME = "4:30";
+		
+		//Execute
+		Parser parser = new Parser();
+		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		
+		//Assert
+		assertNotNull(resultDate);
+		assertEquals(TEST_TIME, formatterTime.format(resultDate));
+		assertEquals("PM", formatterAmPm.format(resultDate));
+	}	
+	
+	
+	public void testConvertSimpleTimeStrToDate_lateAfternoon_ampmParamIsTrue() {
+		
+		//Setup
+		SimpleDateFormat formatterTime = new SimpleDateFormat("h:mm"); //in 12 hour format
+		SimpleDateFormat formatterAmPm = new SimpleDateFormat("a"); //in 12 hour format
+		String TEST_TIME = "6:00";
+		
+		//Execute
+		Parser parser = new Parser();
+		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, true);
+		
+		//Assert
+		assertNotNull(resultDate);
+		assertEquals(TEST_TIME, formatterTime.format(resultDate));
+		assertEquals("PM", formatterAmPm.format(resultDate));
+	}	
+	
 	//	public void testDivideByZero() {
 //		int zero= 0;
 //		int result= 8/zero;

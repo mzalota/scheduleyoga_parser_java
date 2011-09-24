@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +32,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -49,6 +51,9 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
+import com.scheduleyoga.dao.DBAccess;
+import com.scheduleyoga.dao.ParsingHistory;
+import com.scheduleyoga.dao.Studio;
 
 
 public class Parser {
@@ -138,24 +143,46 @@ public class Parser {
 			parseLaughingLotus();
 		}
 		
-		int studioID2 = studioIDFromStudioName(studioID);
-		switch (studioID2) {
-			case STUDIO_ID_OM_YOGA:
-				return parseOmYoga();
-		}
 		return "";
+	}
+	
+	protected void saveEvents(Studio studio, List<List<List<Event> > > allEvents) {
+		studio.deleteEvents();
+		for (int rowNum = 0; rowNum < allEvents.size(); rowNum++) {
+			for (int colNum=0; colNum < allEvents.get(rowNum).size(); colNum++) {
+				saveEventsOneList(studio,allEvents.get(rowNum).get(colNum));
+//				for (int eventNum = 0; eventNum < allEvents.get(rowNum).get(colNum).size(); eventNum++){
+//					Event event = allEvents.get(rowNum).get(colNum).get(eventNum);
+//					//save event to DB
+//					event.setStudio(studio);
+//					event.saveToDB();
+//				}
+			}
+		}
+	}
+	
+	protected void saveEventsOneList(Studio studio, List<Event> allEvents) {		
+		for (int eventNum = 0; eventNum < allEvents.size(); eventNum++) {
+			Event event = allEvents.get(eventNum);
+			//save event to DB
+			event.setStudio(studio);
+			event.saveToDB();
+		}
 	}
 	
 	public String parseStudioSite(Studio studio) throws IOException{
 		
 		studioID = studio.getName();
 		switch (studio.getId()) {
-			case Studio.STUDIO_ID_OM_YOGA:
-				return parseOmYoga();
-			case Studio.STUDIO_ID_BABTISTE:
-				return parseMindAndBodyOnline2();
+			case StudioOld.STUDIO_ID_OM_YOGA:
+				return parseOmYoga(studio);
+			case StudioOld.STUDIO_ID_BABTISTE:				
+				return parseMindAndBodyOnline2(studio);
+			case StudioOld.STUDIO_ID_KAIAYOGA:
+				return parseMindAndBodyOnline2(studio);
+			default:
+				return parseMindAndBodyOnline2(studio);				
 		}
-		return "";
 	}
 	
 	
@@ -171,7 +198,7 @@ public class Parser {
 			return false;
 		}
     	for (final HtmlTableCell cell : row.getCells()) {
-    		if (!containsDate(cell.asText())){
+    		if (!Helper.createNew().containsDate(cell.asText())){
     			return false;
     		}
     	}
@@ -183,8 +210,8 @@ public class Parser {
 	 * 
 	 * @return Studio
 	 */
-	public Studio getStudio(String studioName) {
-		Studio studio = Studio.createNew(studioIDFromStudioName(studioName));
+	public StudioOld getStudio(String studioName) {
+		StudioOld studio = StudioOld.createNew(studioIDFromStudioName(studioName));
         
 		//studio.setId();
 		studio.setName(studioName);
@@ -271,7 +298,7 @@ public class Parser {
             
             
             String time = cells.get(0).asText();
-            if (containsDate(time)){
+            if (Helper.createNew().containsDate(time)){
             	System.out.println("date is: "+time);
             	continue;
             }
@@ -316,7 +343,7 @@ public class Parser {
 	    			continue;
 	    		}
 	    		String dateTime = StringUtils.trim(cells.get(1).asText()).replaceAll("\\s+", " ");;
-	    		if (containsDate(dateTime)) {
+	    		if (Helper.createNew().containsDate(dateTime)) {
 	    			System.out.println("Date is "+dateTime);
 	    			continue;	    			
 	    		}
@@ -337,31 +364,30 @@ public class Parser {
 		}
 	}
 	
-	protected String parseOmYoga() throws FailingHttpStatusCodeException, IOException{
+	protected String parseOmYoga(Studio studio) throws FailingHttpStatusCodeException, IOException{
 		
-		Studio studio = getStudio(studioID);
-			
 		WebClient webClient = new WebClient();
-        URL url = new URL(studio.getUrl()); 
+        URL url = new URL(studio.getUrlSchedule()); 
 		
         HtmlPage page = (HtmlPage) webClient.getPage(url);
-        HtmlTable table = (HtmlTable) page.getByXPath(studio.getxPath()).get(0);
+        HtmlTable table = (HtmlTable) page.getByXPath(studio.getXpath()).get(0);
         
-        EventsParser eventParser = new EventsParser_OmYoga();
+        EventsParser_OmYoga eventParser = new EventsParser_OmYoga();
         
         Segment calendarSegment = Segment.createNewFromElement(table, eventParser);
         System.out.println("The table is: "+calendarSegment);                
         
         List<List<List<Event> > > allEvents = calendarSegment.extractEvents();
         
+        saveEvents(studio, allEvents);
+        
         return eventParser.asHTMLTable(allEvents);
 	}
 	
-	protected String parseMindAndBodyOnline2() throws FailingHttpStatusCodeException, IOException {
-		Studio studio = getStudio(studioID);
+	protected String parseMindAndBodyOnline2(Studio studio) throws FailingHttpStatusCodeException, IOException {
 		
 		WebClient webClient = new WebClient();
-        URL url = new URL(studio.getUrl());
+        URL url = new URL(studio.getUrlSchedule());
         
         HtmlPage pageOuter;
         System.out.println("Loading Page 1");
@@ -369,18 +395,44 @@ public class Parser {
         List<FrameWindow> frames = pageOuter.getFrames();        
         HtmlPage page = (HtmlPage) frames.get(1).getEnclosedPage();
         
+        System.out.println("THE WHOLE PAAGE");
+        System.out.println(page.asXml());
         
-        String xPathParam = xPath.get(studioID); 
+        String xPathParam = studio.getXpath(); //xPath.get(studioID); 
+        
+        System.out.println("XPath is: "+xPathParam);
+        
         HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);
-        return parseTable2(table);
+        
+        String calendarXHTML = table.asXml();
+        
+        System.out.println("JUST THE CALENDAR TABLE");
+        System.out.println(calendarXHTML);
+        
+        ParsingHistory parsingHist = ParsingHistory.createNew(studio.getId(), calendarXHTML);
+        DBAccess.saveObject(parsingHist);
+        
+        String outputPage = parseTable2(studio, table);
+        
+        webClient.closeAllWindows();
+        
+        return outputPage;
 	}
 	
-	private String parseTable2(HtmlTable table) {	
+	private String parseTable2(Studio studio, HtmlTable table) {	
 		
-		EventsParser eventParser = new EventsParser_OmYoga();
+		EventsParser_Baptista eventParser = new EventsParser_Baptista();
 		
-		Segment calendarSegment = Segment.createNewFromElement(table, eventParser);
-		return calendarSegment.asHTMLTable_horizontal();		
+		SegmentHorizontal calendarSegment = (SegmentHorizontal) SegmentHorizontal.createNewFromElement(table, eventParser);
+		
+		List<Event> events = calendarSegment.extractEvents();
+		
+		studio.deleteEvents();
+		saveEventsOneList(studio, events);
+        
+        return eventParser.asHTMLTable(events);
+        
+		//return calendarSegment.asHTMLTable_horizontal();		
 	}
 
 
@@ -453,7 +505,7 @@ public class Parser {
             }
                                   
             String time = StringUtils.trim(cells.get(timeCellNum).asText()).replaceAll("\\s+", " ");;
-            if (containsDate(time)) {
+            if (Helper.createNew().containsDate(time)) {
             
             	//Fri   May 20, 2011
             	SimpleDateFormat parser = new SimpleDateFormat("EEE MMMMM dd, yyyy");
@@ -496,7 +548,7 @@ public class Parser {
 				//continue;
 			}
 			
-			if(containsDate(cell.asText())){
+			if(Helper.createNew().containsDate(cell.asText())){
 				rowsWithDate.put(rowCount, columnCount);
 			}
 			
@@ -506,72 +558,6 @@ public class Parser {
 			System.out.println(" Columns: " + cell.asText());
 		}
 	}
-
-	public boolean containsDate(String text){
-		
-		text = StringUtils.trim(text.toLowerCase());
-				
-		int curYear = Calendar.getInstance().get(Calendar.YEAR);
-		if (text.contains(", "+curYear)){
-			return true;
-		}
-		
-		List<String> daysOfWeek = Arrays.asList("sunday",
-												"monday",
-												"tuesday",
-												"wednesday",
-												"thursday",
-												"friday",
-												"saturday",
-												"sun",
-												"mon",
-												"tue",
-												"wed",
-												"thu",
-												"fri",
-												"sat");
-		Iterator<String> iterator = daysOfWeek.iterator();
-		while ( iterator.hasNext() ){		  
-			if (StringUtils.containsIgnoreCase(text, iterator.next())){
-				return true;
-			}
-		}
-		//System.out.println();
-		
-		
-		return false;
-	}
-	
-//	public boolean containsTime(String text){
-//				
-//		//Pattern that matches "4 pm " --"(\\d{1,2}\\s*[aApP][mM]{0,2})" 
-//		//Pattern that matches "12:30 am " -- "([0-1]{0,1}[\\d]:[\\d]{2}\\s*[aApP][mM]{0,2})"  
-//		String ptrn = "(\\d{1,2}\\s*[aApP][mM]{0,2})|([0-1]{0,1}[\\d]:[\\d]{2}\\s*[aApP][mM]{0,2})"; //"[0-9]+\\s*([aApP][mM]{0,2})\\s*$";
-//		Pattern pattern = Pattern.compile(ptrn);
-//		
-//		Matcher matcher = pattern.matcher(text);
-//		boolean found = matcher.find();
-//		
-//		if (found) {
-//			return true;
-//		}
-//			
-////		// Matches " 4:30 PM "
-////		ptrn = "[0-1]{0,1}\\d:[\\d]{2}\\s*[aApP][mM]{0,2}";
-////		pattern = Pattern.compile(ptrn);
-////		
-////		matcher = pattern.matcher(text);
-////		found = matcher.find();
-//		
-//		
-////		if (found){
-////			System.out.println("Found text: "+matcher.group() +" in position: "+matcher.start() + " till postition: "+matcher.end());
-////		} else {
-////			System.out.println ("Not found time");
-////		}
-//		
-//		return found;
-//	}
 
 	private void printPageSourceCode(HtmlPage page) {
 		System.out.println(page.getTitleText());
@@ -640,43 +626,44 @@ public class Parser {
         return null;
     }
 	
-	
-
-	public static void main2(String[] args) throws IOException {
-		// TODO Auto-generated method stub
-
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpGet httpget = new HttpGet("https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=5/1/2011&loc=1&page=1&pMode=&prodid=&stype=-7&classid=0&catid=&justloggedin=");
-		//https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=5/1/2011&loc=1&page=1&pMode=&prodid=&stype=-7&classid=0&catid=&justloggedin=
-		//https://clients.mindbodyonline.comASP/home.asp?studioid=2148
-		try {
-			HttpResponse response = httpclient.execute(httpget);		
-			HttpEntity entity = response.getEntity();
-			
-			if (entity != null) {
-				
-			    InputStream instream = entity.getContent();
-			
-			    StringWriter writer = new StringWriter();
-			    IOUtils.copy(instream, writer);
-
-			    instream.close();
-			    System.out.println(writer.toString());
-			}
-		} catch (ClientProtocolException e){
-			//TODO: add exception-handling
-			throw(e);
-		} catch (IOException e){
-			//TODO: add exception-handling
-			throw(e);
-		}
-		
-	}
+//	
+//
+//	public static void main2(String[] args) throws IOException {
+//		// TODO Auto-generated method stub
+//
+//		HttpClient httpclient = new DefaultHttpClient();
+//		HttpGet httpget = new HttpGet("https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=5/1/2011&loc=1&page=1&pMode=&prodid=&stype=-7&classid=0&catid=&justloggedin=");
+//		//https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=5/1/2011&loc=1&page=1&pMode=&prodid=&stype=-7&classid=0&catid=&justloggedin=
+//		//https://clients.mindbodyonline.comASP/home.asp?studioid=2148
+//		try {
+//			HttpResponse response = httpclient.execute(httpget);		
+//			HttpEntity entity = response.getEntity();
+//			
+//			if (entity != null) {
+//				
+//			    InputStream instream = entity.getContent();
+//			
+//			    StringWriter writer = new StringWriter();
+//			    IOUtils.copy(instream, writer);
+//
+//			    instream.close();
+//			    System.out.println(writer.toString());
+//			}
+//		} catch (ClientProtocolException e){
+//			//TODO: add exception-handling
+//			throw(e);
+//		} catch (IOException e){
+//			//TODO: add exception-handling
+//			throw(e);
+//		}
+//		
+//	}
 
 	public class EventsParser_OmYoga implements EventsParser {
-		public String tmpVar;
-		public int colNum;
-
+		private String tmpVar;
+		private int colNum;
+		private boolean afterNoon = false;
+		
 		public int getColumnNumber() {
 			return colNum;
 		}
@@ -696,6 +683,12 @@ public class Parser {
 				return null;
 			}
 			Event event = Event.createNew();
+			
+			if (!Helper.createNew().containsTime(parts.get(0))){
+				//The first part is not a time string. This is an invalid event.
+				return null;
+			}
+			
 			Date startTime = convertStrToDate(parts.get(0));
 			//event.setStartTimeStr(parts.get(0));
 			event.setStartTime(startTime);
@@ -707,12 +700,13 @@ public class Parser {
 			}
 			
 			String txt3 = StringUtils.join(parts.toArray(), " ");
-			event.setComment(txt3);
+			event.setComment(txt3);					
+			
 			
 			return event;
 		}
 		
-		@Override
+		//@Override
 		public String asHTMLTable(List<List<List<Event> > > allEvents) {
 			String output = "<table>";
 			for (int rowNum = 0; rowNum < allEvents.size(); rowNum++) {
@@ -722,7 +716,7 @@ public class Parser {
 					for (int eventNum = 0; eventNum < allEvents.get(rowNum).get(colNum).size(); eventNum++){
 						Event event = allEvents.get(rowNum).get(colNum).get(eventNum);
 						//save event to DB
-						event.saveToDB();
+						//event.saveToDB();
 						//createHTML
 						output = output + buildHTMLForEvent(event);
 					}
@@ -755,21 +749,210 @@ public class Parser {
 		
 		protected Date convertStrToDate(String startTimeStr) {
 			
-			Date eventDate = Helper.createNew().nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
+			Helper helper = Helper.createNew();
+			Date eventDate = helper.nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
 			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(eventDate); 			
 			
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+			Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			String eventTimeStr = new SimpleDateFormat("hh:mm a").format(eventTime);
+			
+			//SimpleDateFormat formatterAmPm = ;
+			
+			if (new SimpleDateFormat("a").format(eventTime).equalsIgnoreCase("pm")){
+				//This is the first time that we saw a time in the afternoon. 
+				//set afteNoon flag to be true - all times that follow will be in the afternoon.
+				afterNoon=true;
+			}
+			
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm a");
 			Date dt;
 			try {
-				String dateStr = eventDateStr+" "+startTimeStr;
-				dt = (Date)formatter.parse(dateStr);
+				return (Date)formatter.parse(eventDateStr+" "+eventTimeStr);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+//		protected Date convertStrToDate(String startTimeStr) {
+//			
+//			Date eventDate = Helper.createNew().nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
+//			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(eventDate); 			
+//			
+//			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm a");
+//			Date dt;
+//			try {
+//				if (afterNoon){
+//					String dateStr = eventDateStr+" "+startTimeStr+" pm";
+//					dt = (Date)formatter.parse(dateStr);
+//					return dt;
+//				} else {
+//				
+//					String dateStr = eventDateStr+" "+startTimeStr+" am";
+//					dt = (Date)formatter.parse(dateStr);
+//					
+//					Calendar cal = GregorianCalendar.getInstance();
+//					cal.setTime(dt);
+//					if (cal.get(Calendar.HOUR)<6){
+//						afterNoon = true;
+//					}
+//				}
+//				
+//			} catch (ParseException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			return null;
+//		}
+//		
+	}
+	
+	
+
+	public class EventsParser_Baptista implements EventsParser {
+		private final String TAG_CANCELLED_TODAY = "Cancelled Today";
+
+		private boolean afterNoon = false;
+		private Date curDate;
+		
+		@Override
+		public void setColumnNumber(int columnNum) {
+		}
+		
+
+		public EventsParser_Baptista() {
+			curDate = new Date();
+		}
+
+		/**
+		 * @param parts
+		 */
+		public Event createEventFromParts(List<String> parts) {
+			if (parts.size() <= 0) {
+				return null;
+			}
+			Event event = Event.createNew();
+			
+			System.out.println("in createEventFromParts Parts parameter: "+parts);
+			
+			if (Helper.createNew().containsDate(parts.get(0))){
+				//This is a row probably  that contains date
+				SimpleDateFormat formatter = new SimpleDateFormat("EEE MMMMM dd, yyyy");
+				try {
+					curDate = (Date)formatter.parse(parts.get(0));
+					afterNoon=false; //reset afterNoon flag to false, because we are starting to parse schedule for a new day 
+					return null;
+				} catch (ParseException e) {
+					//This row does not contain date. Ignore this row
+					e.printStackTrace();
+					return null;
+				}
+			}
+			
+			if (!Helper.createNew().containsTime(parts.get(0))){
+				//The first part is not a time string. This is an invalid event.
+				return null;
+			}
+			
+			Date startTime = convertStrToDate(parts.get(0));
+			event.setStartTime(startTime);
+			//parts.remove(0);
+
+			if (parts.size() >= 3 ){
+				String instructorName = parts.get(2);
+				//Remove a note at the end of the instructor name. The note is a number inside brackets, e.g. "Kristyn Durie (1)"
+				instructorName = StringUtils.substringBefore(instructorName,"(");
+				event.setInstructorName(instructorName);
+			}			
+			
+			if (parts.size() >= 2 ){
+				event.setComment(parts.get(1));
+			}
+			
+			if (parts.size() >= 4 ){
+				//String txt3 = StringUtils.join(parts.toArray(), " ");
+				event.setComment(event.getComment()+" ("+parts.get(3)+")");
+			}
+
+			if (TAG_CANCELLED_TODAY.equals(event.getInstructorName())){
+				return null;
+			}
+			
+			return event;
+		}
+		
+		public String asHTMLTable(List<Event> allEvents) {
+			String dateStr = "";
+			
+			String output = "<table>";
+			for (int rowNum = 0; rowNum < allEvents.size(); rowNum++) {
+								
+				String newDateStr = new SimpleDateFormat("EEE MMM dd, yyyy ").format(allEvents.get(rowNum).getStartTime());
+				
+				if (!newDateStr.equals(dateStr)){
+					dateStr = newDateStr;
+					output = output + "<tr style=\"border: 1px solid red;\">";
+					output = output + "<td colspan=3>"+dateStr+"</td>\n";
+					output = output + "</tr>\n";
+				}
+				
+				output = output + "<tr style=\"border: 1px solid red;\">";
+				//output = output + "<td style=\"border: 1px solid red;\">";
+				output = output + buildHTMLForEvent(allEvents.get(rowNum));					
+				//output = output + "</td>";
+				output = output + "</tr>\n";
+			}
+			output = output + "</table>";
+			return output;
+		}
+		
+		/**
+		 * @param events
+		 * @return String output
+		 */
+		public String buildHTMLForEvent(Event event) {
+			
+			if (null == event){
+				return "";
+			}					
+			
+			String output = "";
+			output = output + "<td style=\"border: 1px solid red; color: red\">" +  event.getStartTimeStr() + "</td>";
+			output = output + "<td style=\"border: 1px solid red; color: blue\">" + event.getComment()+ "</td>";
+			output = output + "<td style=\"border: 1px solid red; color: black\">" + event.getInstructorName() + "</td>";
+			
+			return output;
+		}
+		
+		protected Date convertStrToDate(String startTimeStr) {
+			
+			//string is in the format 6:30-8:00 am. Discard everything before -
+			startTimeStr = StringUtils.substringBefore(startTimeStr, "-");
+			startTimeStr = StringUtils.trim(startTimeStr);
+			
+			Helper helper = Helper.createNew();
+			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(curDate);
+			
+			Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			String eventTimeStr = new SimpleDateFormat("HH:mm").format(eventTime);
+			
+			if (new SimpleDateFormat("a").format(eventTime).equalsIgnoreCase("pm")){
+				//This is the first time that we saw a time in the afternoon. 
+				//set afteNoon flag to be true - all times that follow will be in the afternoon.
+				afterNoon=true;
+			}
+			
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+			Date dt;
+			try {
+				dt = (Date)formatter.parse(eventDateStr+" "+eventTimeStr);
 				return dt;
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				return null;
 			}
-			return null;
 		}
-		
 	}
 }

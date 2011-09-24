@@ -61,6 +61,8 @@ public class ElementParser extends DefaultHandler{
 //			InputSource inSource = new InputSource(strReader);
 //			inSource.setEncoding("UTF-8");
 			
+			//System.out.println("String to Parse: "+xmlStr);
+			
 			sp.parse(is, this);
 			
 			return StringUtils.trim(value); 

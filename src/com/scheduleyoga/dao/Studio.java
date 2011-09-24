@@ -35,7 +35,7 @@ public class Studio {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
-	protected long id;
+	protected int id;
 
 	@Column(name = "name", length = 100)
 	protected String name;
@@ -49,6 +49,9 @@ public class Studio {
 	@Column(name = "url_schedule", length = 1024)
 	protected String urlSchedule;
 
+	@Column(name = "xpath", length = 1024)
+	protected String xpath;	
+	
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "created_on")
 	protected Date createdOn;
@@ -74,7 +77,18 @@ public class Studio {
 		return (Studio) DBAccess.openSession().get(Studio.class, new Long(id));
 	}
 
-	public long getId() {
+	public void deleteEvents() {
+		String hqlDelete = "delete Event e where e.studio = :this";
+		Session sess = DBAccess.openSession();
+		sess.beginTransaction();
+		Query q = sess.createQuery(hqlDelete);
+		q.setParameter("this", this);
+		q.executeUpdate();
+		sess.getTransaction().commit();
+		System.out.println("Finished DELETITNG");
+	}
+	
+	public int getId() {
 		return id;
 	}
 
@@ -93,6 +107,10 @@ public class Studio {
 	public String getUrlSchedule() {
 		return urlSchedule;
 	}
+	
+	public String getXpath() {
+		return xpath;
+	}	
 
 	public Date getCreatedOn() {
 		return createdOn;
@@ -100,5 +118,13 @@ public class Studio {
 
 	public Date getModifiedOn() {
 		return modifiedOn;
+	}
+
+	@Override
+	public String toString() {
+		return "Studio [id=" + id + ", name=" + name + ", nameForUrl="
+				+ nameForUrl + ", urlHome=" + urlHome + ", urlSchedule="
+				+ urlSchedule + ", xpath=" + xpath + ", createdOn=" + createdOn
+				+ ", modifiedOn=" + modifiedOn + "]";
 	}
 }
