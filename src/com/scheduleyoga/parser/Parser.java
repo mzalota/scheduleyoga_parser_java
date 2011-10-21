@@ -459,7 +459,7 @@ public class Parser {
         URL url = new URL(studio.getUrlSchedule());
         
         HtmlPage pageOuter;
-        System.out.println("Loading Page 1");
+        System.out.println("Loading Page: "+url);
         pageOuter = (HtmlPage)webClient.getPage(url);        
         //System.out.println("OUTER PAAGE");
         //System.out.println(pageOuter.asXml());
@@ -467,15 +467,17 @@ public class Parser {
         List<FrameWindow> frames = pageOuter.getFrames();        
         HtmlPage page = (HtmlPage) frames.get(1).getEnclosedPage();
         
-        System.out.println("THE WHOLE PAAGE");
-        System.out.println(page.asXml());
+        //System.out.println("THE WHOLE PAAGE");
+        //System.out.println(page.asXml());
         
         System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "info");
         
         String xPathParam = studio.getXpath(); //xPath.get(studioID); 
-        
+                
         System.out.println("XPath is: "+xPathParam);
         
+        //TODO: Hardcoded XPath for MindBodyOnline
+        xPathParam = "/html/body/div[4]/div/div/div/table/tbody/tr[2]/td/table";
         List<HtmlElement> elements = (List<HtmlElement>) page.getByXPath(xPathParam);
                 
         if (elements.size() <=0 ){
@@ -486,10 +488,9 @@ public class Parser {
         }
     	HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);        
     	String calendarXHTML = table.asXml();
-        
-        
+             
         System.out.println("JUST THE CALENDAR TABLE");
-        System.out.println(calendarXHTML);
+        //System.out.println(calendarXHTML);
         
         ParsingHistory parsingHist = ParsingHistory.createNew(studio.getId(), calendarXHTML);
         DBAccess.saveObject(parsingHist);
@@ -916,7 +917,7 @@ public class Parser {
 			}
 			Event event = Event.createNew();
 			
-			System.out.println("in createEventFromParts Parts parameter: "+parts);
+			//System.out.println("in createEventFromParts Parts parameter: "+parts);
 			
 			if (Helper.createNew().containsDate(parts.get(0))){
 				//This is a row probably  that contains date

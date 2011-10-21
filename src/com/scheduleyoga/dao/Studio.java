@@ -120,6 +120,15 @@ public class Studio {
 		return modifiedOn;
 	}
 
+	
+	static public List<Studio> getAllStudios() {
+		Query q = DBAccess.openSession().createQuery(
+				"from Studio");
+
+		List<Studio> results = (List<Studio>) q.list();		
+		return results;
+	}
+	
 	@Override
 	public String toString() {
 		return "Studio [id=" + id + ", name=" + name + ", nameForUrl="

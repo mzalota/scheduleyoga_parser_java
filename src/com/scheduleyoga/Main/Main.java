@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ClassPathResource;
 
@@ -37,8 +39,13 @@ import com.scheduleyoga.dao.Studio;
 import com.scheduleyoga.parser.Parser;
 import com.scheduleyoga.tests.SimpleTest;
 
-public class Main {
+// Page about how to set up Virtual Hosts, etc. 
+// http://docs.jboss.org/jbossas/jboss4guide/r4/html/ch9.chapt.html
 
+//http://onjava.com/pub/a/onjava/2004/02/25/jbossjdbc.html?page=last#mysql
+//http://www.coderanch.com/t/424312/JBoss/Configuring-Eclipse-JBoss-MySQL-EJB
+
+public class Main {
 	
 	public static void executeTests() {
 		junit.framework.TestSuite testSuite = new junit.framework.TestSuite(SimpleTest.class);
@@ -52,6 +59,9 @@ public class Main {
 	public static void main(String[] args) {
 		//executeTests();
 		//parse();
+		
+		Logger logger = LoggerFactory.getLogger(Main.class);
+	    logger.info("Hello Main Class");
 		
 		XmlBeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource("MainLoop.xml"));
 		
