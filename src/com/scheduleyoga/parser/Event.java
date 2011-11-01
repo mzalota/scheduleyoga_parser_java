@@ -19,28 +19,15 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.hibernate.Query;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.cfg.Configuration;
 
-import com.scheduleyoga.parser.EventsDAO;
 import com.scheduleyoga.dao.DBAccess;
+import com.scheduleyoga.dao.Instructor;
 import com.scheduleyoga.dao.Studio;
 
 
 @Entity
 @Table(name="events")
 public class Event {
-
-	@Override
-	public String toString() {
-		return "Event [id=" + id + ", studio_id=" + studio_id + ", comment="
-				+ comment + ", startTime=" + startTime + ", instructorName="
-				+ instructorName + ", studio=" + studio + ", startTimeStr="
-				+ startTimeStr + ", createdOn=" + createdOn + ", modifiedOn="
-				+ modifiedOn + "]";
-	}
 
 	protected long id;
 	protected long studio_id;
@@ -51,6 +38,8 @@ public class Event {
 	protected String startTimeStr;
 	protected Date createdOn;
 	protected Date modifiedOn;
+	protected Instructor instructor = null;
+	
 	
 	protected Event() {
 		// TODO Auto-generated constructor stub
@@ -82,6 +71,16 @@ public class Event {
 		this.instructorName = instructorName;
 	}
 
+	@ManyToOne(cascade=CascadeType.ALL)
+    @JoinColumn(name="instructor_id")    
+	public Instructor getInstructor() {
+		return instructor;
+	}
+
+	public void setInstructor(Instructor instructor) {
+		this.instructor = instructor;
+	}
+	
 	@Column(name = "comments", length=100)
 	public String getComment() {
 		return comment;
@@ -159,11 +158,6 @@ public class Event {
 		this.modifiedOn = modifiedOn;
 	}
 
-	public void saveToDB(){
-		EventsDAO daoObj = new EventsDAO();
-		daoObj.store(this);
-	}
-	
 	public static List<Event> findEventsForStudioForDate(String studioNameUrl, Date date){
 		
 		String queryStr = 	" select ev " +
@@ -179,6 +173,33 @@ public class Event {
 		List<Event> events = (List<Event>) q.list();
 		
 		return events;
+	}
+
+	public static List<Event> findEventsForInstructorForDate(Instructor instructor, Date date){
+		
+		String queryStr = 	" select ev " +
+							" from Event as ev " +							
+							" where date(ev.startTime) = date(:dateParam) " +
+								" and instructor = :instructor ";
+		Query q = DBAccess.openSession().createQuery(queryStr);
+		q.setParameter("dateParam", date);
+		q.setParameter("instructor", instructor);
+		
+		@SuppressWarnings("unchecked")
+		List<Event> events = (List<Event>) q.list();
+		
+		return events;
+	}
+
+
+
+	@Override
+	public String toString() {
+		return "Event [id=" + id + ", studio_id=" + studio_id + ", comment="
+				+ comment + ", startTime=" + startTime + ", instructorName="
+				+ instructorName + ", studio=" + studio + ", startTimeStr="
+				+ startTimeStr + ", createdOn=" + createdOn + ", modifiedOn="
+				+ modifiedOn + ", instructor=" + instructor + "]";
 	}
 	
 }

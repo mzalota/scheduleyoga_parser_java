@@ -9,6 +9,7 @@ import org.hibernate.cfg.Configuration;
 
 import com.scheduleyoga.parser.Event;
 
+//THIS CLASS IS NOT USED ANYWHERE. Delete it
 public class EventsDAO {
 
 	static public SessionFactory sessionFactory = null;

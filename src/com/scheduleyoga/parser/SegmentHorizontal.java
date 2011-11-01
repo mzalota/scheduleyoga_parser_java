@@ -197,15 +197,6 @@ public class SegmentHorizontal implements ISegment {
 		return textExtractor.getValues();
 	}
 
-	/**
-	 * @param events
-	 */
-	protected void saveEventsToDB(List<Event> events) {
-		for (final Event event : events) {
-			event.saveToDB();
-		}
-	}
-
 //	/**
 //	 * @param events
 //	 * @return String output

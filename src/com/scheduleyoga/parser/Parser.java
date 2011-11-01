@@ -40,6 +40,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -58,7 +59,9 @@ import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
 //import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
 
+import com.scheduleyoga.Main.MainLoop;
 import com.scheduleyoga.dao.DBAccess;
+import com.scheduleyoga.dao.Instructor;
 import com.scheduleyoga.dao.ParsingHistory;
 import com.scheduleyoga.dao.Studio;
 
@@ -79,6 +82,7 @@ public class Parser {
 	static public final int STUDIO_ID_LAUGHING_LOTUS = 5;
 	static public final int STUDIO_ID_OM_YOGA = 6;
 	
+	private final Logger logger = Logger.getLogger(Parser.class);
 	
 	protected String studioID;
 	protected Map<String, String> xPath = new HashMap<String, String>();
@@ -86,7 +90,6 @@ public class Parser {
 	
 	protected Map<String, Integer> studioIDNameMap = new HashMap<String, Integer>();
 	
-
 	public static Parser createNew (String studioIDParam) {
 		
 		Parser newObj = new Parser();
@@ -171,9 +174,22 @@ public class Parser {
 	protected void saveEventsOneList(Studio studio, List<Event> allEvents) {		
 		for (int eventNum = 0; eventNum < allEvents.size(); eventNum++) {
 			Event event = allEvents.get(eventNum);
-			//save event to DB
-			event.setStudio(studio);
-			event.saveToDB();
+			
+			event.setStudio(studio);			
+			
+			String instructorName = Helper.createNew().cleanUpInstructorName(event.getInstructorName());
+			if (instructorName != event.getInstructorName().trim()){
+				if (!StringUtils.isEmpty(event.getInstructorName())) {
+					logger.warn("Invalid Instructor Name: -"+event.getInstructorName()+"- cleaned up is -"+instructorName+"-");
+				}
+			}
+			
+			Instructor instructor = Instructor.fetchInstructorByName(instructorName,studio);
+			if (instructor != null) {
+				event.setInstructor(instructor);
+			}
+						
+			DBAccess.saveObject(event);
 		}
 	}
 	
@@ -393,73 +409,15 @@ public class Parser {
 	
 	protected String parseMindAndBodyOnline2(Studio studio) throws FailingHttpStatusCodeException, IOException {
 
-		//		final HTMLParserListener collecter = new HTMLParserListener() {
-		//
-		//			public void error(final String message, final URL url,
-		//					final int line, final int column, final String key) {
-		//				messages.add(new MessageInfo(true, message, url, line, column, key));
-		//			}
-		//
-		//			public void warning(final String message, final URL url,
-		//					final int line, final int column, final String key) {
-		//				messages.add(new MessageInfo(false, message, url, line, column, key));
-		//			}
-		//		};
-		//		webClient.setHTMLParserListener(collecter);
 
 
-		System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "error");
 
-		WebClient webClient = new WebClient();
-		webClient.setCssEnabled(false);
-		//webClient.setJavaScriptEnabled(false);
-		webClient.setThrowExceptionOnFailingStatusCode(false);
-		webClient.setThrowExceptionOnScriptError(false);
-
-
-		webClient.setIncorrectnessListener(new IncorrectnessListener() {
-			@Override
-			public void notify(String arg0, Object arg1) {
-				// TODO Auto-generated method stub
-			}
-		});
-
-		webClient.setCssErrorHandler(new SilentCssErrorHandler());		
-
-		webClient.setHTMLParserListener(new HTMLParserListener() {
-			@Override
-			public void warning(String arg0, URL arg1, int arg2, int arg3, String arg4) {
-				// TODO Auto-generated method stub
-			}
-			@Override
-			public void error(String arg0, URL arg1, int arg2, int arg3, String arg4) {
-				// TODO Auto-generated method stub
-			}
-		});
-
-		webClient.setJavaScriptErrorListener(new JavaScriptErrorListener() {
-			@Override
-			public void timeoutError(HtmlPage arg0, long arg1, long arg2) {
-				// TODO Auto-generated method stub
-			}
-			@Override
-			public void scriptException(HtmlPage arg0, ScriptException arg1) {
-				// TODO Auto-generated method stub
-			}
-			@Override
-			public void malformedScriptURL(HtmlPage arg0, String arg1, MalformedURLException arg2) {
-				// TODO Auto-generated method stub
-			}
-			@Override
-			public void loadScriptError(HtmlPage arg0, URL arg1, Exception arg2) {
-				// TODO Auto-generated method stub
-			}
-		});
+		WebClient webClient = getWebClient();
 		
         URL url = new URL(studio.getUrlSchedule());
         
         HtmlPage pageOuter;
-        System.out.println("Loading Page: "+url);
+        logger.info("Loading Page: "+url);
         pageOuter = (HtmlPage)webClient.getPage(url);        
         //System.out.println("OUTER PAAGE");
         //System.out.println(pageOuter.asXml());
@@ -470,11 +428,11 @@ public class Parser {
         //System.out.println("THE WHOLE PAAGE");
         //System.out.println(page.asXml());
         
-        System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "info");
+        //System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "info");               
         
         String xPathParam = studio.getXpath(); //xPath.get(studioID); 
                 
-        System.out.println("XPath is: "+xPathParam);
+        logger.info("XPath is: "+xPathParam);
         
         //TODO: Hardcoded XPath for MindBodyOnline
         xPathParam = "/html/body/div[4]/div/div/div/table/tbody/tr[2]/td/table";
@@ -483,13 +441,13 @@ public class Parser {
         if (elements.size() <=0 ){
         	webClient.closeAllWindows();
         	String msg = "COULD NOT FIND specified XPath: "+xPathParam;
-        	System.err.println(msg);
+        	logger.error(msg);
         	return "</br><strong>"+msg+"</strong></br>";
         }
     	HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);        
     	String calendarXHTML = table.asXml();
              
-        System.out.println("JUST THE CALENDAR TABLE");
+    	logger.info("JUST THE CALENDAR TABLE");
         //System.out.println(calendarXHTML);
         
         ParsingHistory parsingHist = ParsingHistory.createNew(studio.getId(), calendarXHTML);
@@ -500,6 +458,62 @@ public class Parser {
         webClient.closeAllWindows();
         
         return outputPage;
+	}
+
+	/**
+	 * @return
+	 */
+	protected WebClient getWebClient() {
+				
+		//System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", logLevel);
+		
+		WebClient webClient = new WebClient();
+		webClient.setCssEnabled(false);
+		//webClient.setJavaScriptEnabled(false);
+		
+		
+//		webClient.setThrowExceptionOnFailingStatusCode(false);
+//		webClient.setThrowExceptionOnScriptError(false);
+
+//		webClient.setIncorrectnessListener(new IncorrectnessListener() {
+//			@Override
+//			public void notify(String arg0, Object arg1) {
+//				// TODO Auto-generated method stub
+//			}
+//		});
+
+//		webClient.setCssErrorHandler(new SilentCssErrorHandler());		
+//
+//		webClient.setHTMLParserListener(new HTMLParserListener() {
+//			@Override
+//			public void warning(String arg0, URL arg1, int arg2, int arg3, String arg4) {
+//				// TODO Auto-generated method stub
+//			}
+//			@Override
+//			public void error(String arg0, URL arg1, int arg2, int arg3, String arg4) {
+//				// TODO Auto-generated method stub
+//			}
+//		});
+//
+//		webClient.setJavaScriptErrorListener(new JavaScriptErrorListener() {
+//			@Override
+//			public void timeoutError(HtmlPage arg0, long arg1, long arg2) {
+//				// TODO Auto-generated method stub
+//			}
+//			@Override
+//			public void scriptException(HtmlPage arg0, ScriptException arg1) {
+//				// TODO Auto-generated method stub
+//			}
+//			@Override
+//			public void malformedScriptURL(HtmlPage arg0, String arg1, MalformedURLException arg2) {
+//				// TODO Auto-generated method stub
+//			}
+//			@Override
+//			public void loadScriptError(HtmlPage arg0, URL arg1, Exception arg2) {
+//				// TODO Auto-generated method stub
+//			}
+//		});
+		return webClient;
 	}
 	
 	private String parseTable2(Studio studio, HtmlTable table) {	

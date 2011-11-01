@@ -398,6 +398,160 @@ public class SimpleTest extends TestCase {
 		assertEquals("PM", formatterAmPm.format(resultDate));
 	}	
 	
+
+	public void testNameToURLName_variousWhiteSpaces() {
+		
+		//SETUP
+		String TEST_STR = " ( Rachael  	  \n O'Lappen  \n ] ";
+		
+		//EXECUTE
+		String result = Helper.createNew().nameToURLName(TEST_STR);
+		
+		//ASSERT
+		assertEquals("rachael-olappen", result);
+	}	
+	
+	public void testCleanUpInstructorName() {
+		
+		//SETUP		
+		String result;
+		
+		//EXECUTE		
+		result = Helper.createNew().cleanUpInstructorName(" eli ");
+		assertEquals("Eli", result);
+		
+		
+				
+		result = Helper.createNew().cleanUpInstructorName(" Carrie   Gaynor@ 800 Ayrault Rd. ");
+		assertEquals("Carrie Gaynor", result);
+		
+		//If name contains dashes, all names should be capitalized
+		result = Helper.createNew().cleanUpInstructorName(" Jeanne-Marie Derrick ");
+		assertEquals("Jeanne-Marie Derrick", result);
+		
+		//If name contains apostrofies, both sides should be capitalized
+		result = Helper.createNew().cleanUpInstructorName(" T'ai Jamar Hanna ");
+		assertEquals("T'Ai Jamar Hanna", result);					
+		
+		result = Helper.createNew().cleanUpInstructorName(" * * ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Community   Class  teacher ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" 1 hour & 15 minutes ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName("45 Minutes");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName("Constanza Roldan / Arthur Roldan");
+		assertEquals("Constanza Roldan", result);
+		
+		result = Helper.createNew().cleanUpInstructorName("Barbara & Kristin");
+		assertEquals("Barbara", result);
+				
+		result = Helper.createNew().cleanUpInstructorName(" Eastern Calisthenics/Body Sculpting ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName("Wendy/Santoshi Baranello");
+		assertEquals("Wendy", result);
+		
+		result = Helper.createNew().cleanUpInstructorName("GOLDEN BRIDGE STAFF");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Staff ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Staff Instructor ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Teacher Independent ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Yoga Collective ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" TBD ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" TBA ");
+		assertNull(result);
+
+		//exclude if contains word "class" at the end
+		result = Helper.createNew().cleanUpInstructorName(" GYROTONIC® Group Class ");
+		assertNull(result);
+		
+		//exclude if contains word "class" in the middle
+		result = Helper.createNew().cleanUpInstructorName(" Dharma yoga class for beginners ");
+		assertNull(result);
+		
+		//exclude if contains word "level"
+		result = Helper.createNew().cleanUpInstructorName(" GYROKINESIS® Level II ");
+		assertNull(result);
+		
+		//exclude if contains phrase "Body Sculpting"
+		result = Helper.createNew().cleanUpInstructorName(" Eastern Calisthenics/Body Sculpting ");
+		assertNull(result);
+		
+		//exclude if contains phrase "for Adults"
+		result = Helper.createNew().cleanUpInstructorName(" Shanti Yoga for Adults ");
+		assertNull(result);
+				
+		//exclude if contains phrase "Vinyasa"
+		result = Helper.createNew().cleanUpInstructorName(" Shanti Sweat-it-Out Vinyasa-Style ");
+		assertNull(result);
+		
+		//exclude if starts with word "Yoga"
+		result = Helper.createNew().cleanUpInstructorName(" Yoga Tune Up® ");
+		assertNull(result);
+		
+		//exclude if its word "open" or "rest"
+		result = Helper.createNew().cleanUpInstructorName(" Open ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Rest ");
+		assertNull(result);
+		
+		//exclude if ends with word "Basics"
+		result = Helper.createNew().cleanUpInstructorName(" Budokon Basics ");
+		assertNull(result);
+		
+		//exclude if contains word "Lunchtime"
+		result = Helper.createNew().cleanUpInstructorName(" Lunchtime  Yoga Flow ");
+		assertNull(result);
+		
+		//exclude if contains phrase "Community Yoga"
+		result = Helper.createNew().cleanUpInstructorName(" Community Yoga ");
+		assertNull(result);
+		
+		//exclude if contains phrase "Strength Yoga"
+		result = Helper.createNew().cleanUpInstructorName(" Strength Yoga ");
+		assertNull(result);
+		
+		//exclude if contains phrase "Hot Yoga"
+		result = Helper.createNew().cleanUpInstructorName(" Traditional Hot Yoga ");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName(" Illuminated Journey Grads ");
+		assertNull(result);
+		
+		//Yoga Center
+		result = Helper.createNew().cleanUpInstructorName("Sivananda Yoga Centers NY");
+		assertNull(result);
+		
+		result = Helper.createNew().cleanUpInstructorName("DY Teacher");
+		assertNull(result);			
+		
+		result = Helper.createNew().cleanUpInstructorName(" Anna M ");
+		assertNull(result);	
+		
+		//If name contains dot at the end, strip it 
+		result = Helper.createNew().cleanUpInstructorName(" Mariyah X. ");
+		assertNull(result);	
+		
+	}	
+	
 	//	public void testDivideByZero() {
 //		int zero= 0;
 //		int result= 8/zero;

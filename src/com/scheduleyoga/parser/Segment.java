@@ -27,6 +27,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
+import com.scheduleyoga.dao.DBAccess;
 
 public class Segment implements ISegment {
 
@@ -250,15 +251,6 @@ public class Segment implements ISegment {
 		ElementParser textExtractor = new ElementParser();
 		textExtractor.parseDocument(subRow.asXml());
 		return textExtractor.getValues();
-	}
-
-	/**
-	 * @param events
-	 */
-	protected void saveEventsToDB(List<Event> events) {
-		for (final Event event : events) {
-			event.saveToDB();
-		}
 	}
 
 	/**

@@ -4,15 +4,19 @@ create table schedule(
  	startTime DATETIME,
  	PRIMARY KEY(id));
  	
-create table events (	
-	id int not null auto_increment primary key, 
-	studio_id int, 
-	start_time datetime,
-	instructor_name varchar(100), 
-	comments varchar(100),
-	created_on  datetime, 
-	modified_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
-
+CREATE TABLE `events` (
+  `id` int(11) NOT NULL auto_increment,
+  `studio_id` int(11) default NULL,
+  `start_time` datetime default NULL,
+  `instructor_name` varchar(100) default NULL,
+  `instructor_id` int(11) default NULL,
+  `comments` varchar(100) default NULL,
+  `created_on` datetime default NULL,
+  `modified_on` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22196 DEFAULT CHARSET=latin1;
+	
+	
 create table events_staging (	
 	id int not null auto_increment primary key, 
 	studio_id int, 
@@ -53,6 +57,28 @@ create table parsing_history (
 	
 select * from parsing_history;	
 	
+
+CREATE TABLE instructors (
+  `id` int(11) NOT NULL auto_increment,
+  `instructor_name` varchar(150) NOT NULL,
+  `name_url` varchar(150) unique NOT NULL,   
+  `aliases` varchar(1000) default NULL,
+  `created_on` datetime default NULL,
+  `modified_on` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22196 DEFAULT CHARSET=latin1;
+
+
+CREATE TABLE studios_instructors (
+  `id` int(11) NOT NULL auto_increment,
+  `studio_id` int(11) NOT NULL,
+  `instructor_id` int(11) NOT NULL,
+  `url` varchar(1024) default NULL,
+  `created_on` datetime default NULL,
+  `modified_on` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22196 DEFAULT CHARSET=latin1;
+
 insert into schyoga1.studios (id, name, name_url, url_home, url_schedule, xpath, created_on) values 
 (1, "Babtiste", "babtiste","http://www.baronbaptiste.com/", "https://clients.mindbodyonline.com/ASP/home.asp?studioid=1466", "/html/body/div[2]/div/table/tbody/tr/td/table/tbody/tr[2]/td/table", NOW()),  
 (2, "Kaia Yoga", "kaia-yoga", "http://kaiayoga.com/", "https://clients.mindbodyonline.com/ASP/home.asp?studioid=2148", "/html/body/div[2]/div/table/tbody/tr/td/table/tbody/tr[3]/td/table", NOW()),

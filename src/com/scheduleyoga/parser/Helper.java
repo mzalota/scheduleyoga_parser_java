@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.WordUtils;
 
 public class Helper {
 
@@ -215,5 +216,102 @@ public class Helper {
 		}
 		return pathElements;
 	}
+	
+	public String nameToURLName(String name) {		
+		name = name.replace("'", ""); //remove any apostrophies
+		name = name.replaceAll("\\W+", " "); //replace any non-word characters with space
+		name = name.trim().toLowerCase(); 		
+		name = name.replaceAll("\\s+", "-"); //replace any sequence of white space characters with a single dash - 
+		return name;
+	}
+	
+	public String cleanUpInstructorName(String name) {	
+		name = name.replace('.', ' ');		
+		name = name.trim().toLowerCase(); 		
+		name = name.replaceAll("\\s+", " "); //replace any sequence of white space characters with a single dash -	
+		if (includesSuspiciousWords(name)){
+			return null;
+		}
+		
+		if (name.contains("/")){
+			//the string contains two instructors. Take first one, clean it up and return.
+			return cleanUpInstructorName(name.split("/")[0]);
+		}
+		
+		if (name.contains("&")){
+			//the string contains two instructors. Take first one, clean it up and return.
+			return cleanUpInstructorName(name.split("&")[0]);
+		}
+		
+		name = StringUtils.substringBefore(name,"@").trim();
+		
+		name = WordUtils.capitalize(name,new char[] { '-', ' ', '\'' });
+		
+		//TODO: rewrite this using regex.
+		if (name.substring(name.length()-2, name.length()-1).equals(" ")){
+			//the character before last is a space. It may mean that the instructor's last name is abbrivated
+			if (StringUtils.countMatches(name, " ") == 1){
+				//this string contains only one space, so it ends with a single letter -- its an abbriviation.
+				return null;
+			}			
+		}
+		
+		return name;
+	}
+	
+	private boolean includesSuspiciousWords(String name){
+		//Replace non-word characters and see if anything is left.
+		if(name.replaceAll("\\W+", " ").trim().isEmpty()) return true;
+		
+		if (name.equals("community class teacher")) return true;
+		
+		if (name.contains(" hour ")) return true;
+		if (name.contains(" minute")) return true;
+		
+		if (name.equals("staff")) return true;
+		if (name.startsWith("staff ")) return true;
+		if (name.endsWith(" staff")) return true;
+		
+		if (name.equals("tbd")) return true;		
+		if (name.equals("tba")) return true;
+		
+		if (name.endsWith(" class")) return true;		
+		if (name.contains(" class ")) return true;
+		
+		if (name.contains(" level ")) return true;
+		
+		if (name.contains("body sculpting")) return true;
+		
+		if (name.contains("for adults")) return true;
+		
+		if (name.contains("vinyasa")) return true;
+		
+		if (name.startsWith("yoga")) return true;
+		
+		if (name.equals("open")) return true;
+		
+		if (name.equals("rest")) return true;
+		
+		if (name.endsWith(" basics")) return true;
+		
+		if (name.contains("lunchtime")) return true;
+		
+		if (name.contains("strength yoga")) return true;
+		
+		if (name.contains("community yoga")) return true;
+		
+		if (name.contains("hot yoga")) return true;
+		
+		if (name.contains("teacher independent")) return true;
+		
+		if (name.contains("illuminated journey grads")) return true;
+		
+		if (name.contains("yoga center")) return true;
+		
+		if (name.endsWith("teacher")) return true;
+		
+		return false;
+	}
+
 	
 }

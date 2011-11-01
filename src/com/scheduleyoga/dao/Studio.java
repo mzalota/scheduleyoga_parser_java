@@ -11,17 +11,15 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-//import javax.persistence.Query;
+
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.Transient;
 
+import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.cfg.Configuration;
+
 
 /**
  * @author mzalota
@@ -32,6 +30,8 @@ import org.hibernate.cfg.Configuration;
 @Table(name = "studios")
 public class Studio {
 
+	private static final Logger logger = Logger.getLogger(Studio.class);
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
@@ -51,6 +51,9 @@ public class Studio {
 
 	@Column(name = "xpath", length = 1024)
 	protected String xpath;	
+
+	@Column(name = "mindbodyonline_id", length = 10)
+	protected String mindbodyId;		
 	
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "created_on")
@@ -60,6 +63,7 @@ public class Studio {
 	@Column(name = "modified_on")
 	protected Date modifiedOn;
 
+	
 	static public Studio createFromNameURL(String nameURL) {
 		Query q = DBAccess.openSession().createQuery(
 				"from Studio where nameForUrl=:nameUrl");
@@ -85,7 +89,7 @@ public class Studio {
 		q.setParameter("this", this);
 		q.executeUpdate();
 		sess.getTransaction().commit();
-		System.out.println("Finished DELETITNG");
+		logger.info("Finished DELETITNG");
 	}
 	
 	public int getId() {
@@ -112,8 +116,12 @@ public class Studio {
 		return xpath;
 	}	
 
+	public String getMindbodyId() {
+		return mindbodyId;
+	}
+	
 	public Date getCreatedOn() {
-		return createdOn;
+		return (this.createdOn == null) ? new Date() : this.createdOn;
 	}
 
 	public Date getModifiedOn() {

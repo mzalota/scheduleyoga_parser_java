@@ -61,12 +61,15 @@ public class Main {
 		//parse();
 		
 		Logger logger = LoggerFactory.getLogger(Main.class);
-	    logger.info("Hello Main Class");
-		
+	    logger.info("Hello Main Class");		
+	    
 		XmlBeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource("MainLoop.xml"));
 		
 		MainLoop myBean = (MainLoop) beanFactory.getBean("MainLoopBean");
 		myBean.refreshAllStudios(false);
+		
+		logger.info("Done");
+		
 	}
 	
 	
