@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -166,34 +168,55 @@ public class Helper {
 	 * @return
 	 */
 	public long getDayDiffWithToday(Date schedDate) {
-		Calendar calToday = new GregorianCalendar();
-		Calendar calSchedDate = new GregorianCalendar();
-		calSchedDate.setTime(schedDate);
+		return getDayDiff(schedDate, new Date());
 		
-		long MILLSECS_PER_DAY = 1000 * 60 * 60 * 24;
-		long schedDateMilsec = calSchedDate.getTimeInMillis() + calSchedDate.getTimeZone().getOffset( calSchedDate.getTimeInMillis() ); 
-		long todayMilsec = calToday.getTimeInMillis() + calToday.getTimeZone().getOffset( calToday.getTimeInMillis() );
-		long dayDiff = (schedDateMilsec - todayMilsec) / MILLSECS_PER_DAY;
-		
-		if (dayDiff == 0) {
-			//today and schedDate are less then 24 hours away from each other
-			if (calSchedDate.get(Calendar.DAY_OF_MONTH) == calToday.get(Calendar.DAY_OF_MONTH)){
-				//today's date and schedDate's date are the same. So its the same calendar date
-				return 0;
-			} 
-			if (schedDateMilsec > todayMilsec){
-				//schedDate is larger then today, so it is tomorrow (1 day diff)
-				return 1;
-			}
-			
-			if (todayMilsec > schedDateMilsec){
-				//today is larger then schedDate, so shedDate is yesterday (-1 day diff)
-				return -1;
-			}
-		}
-		return dayDiff;
+//		Calendar calToday = new GregorianCalendar();
+//		Calendar calSchedDate = new GregorianCalendar();
+//		calSchedDate.setTime(schedDate);
+//		
+//		long MILLSECS_PER_DAY = 1000 * 60 * 60 * 24;
+//		long schedDateMilsec = calSchedDate.getTimeInMillis() + calSchedDate.getTimeZone().getOffset( calSchedDate.getTimeInMillis() ); 
+//		long todayMilsec = calToday.getTimeInMillis() + calToday.getTimeZone().getOffset( calToday.getTimeInMillis() );
+//		long dayDiff = (schedDateMilsec - todayMilsec) / MILLSECS_PER_DAY;
+//		
+//		if (dayDiff == 0) {
+//			//today and schedDate are less then 24 hours away from each other
+//			if (calSchedDate.get(Calendar.DAY_OF_MONTH) == calToday.get(Calendar.DAY_OF_MONTH)){
+//				//today's date and schedDate's date are the same. So its the same calendar date
+//				return 0;
+//			} 
+//			if (schedDateMilsec > todayMilsec){
+//				//schedDate is larger then today, so it is tomorrow (1 day diff)
+//				return 1;
+//			}
+//			
+//			if (todayMilsec > schedDateMilsec){
+//				//today is larger then schedDate, so shedDate is yesterday (-1 day diff)
+//				return -1;
+//			}
+//		}
+//		return dayDiff;
 	}
 	
+	public int getDayDiff(Date leftDate, Date rightDate) {
+		
+		Calendar tmpCal = new GregorianCalendar();
+		
+		//Strip hour, mins and seconds from rightDate
+		tmpCal.setTime(rightDate);		
+		Calendar calRigthDate = new GregorianCalendar(tmpCal.get(Calendar.YEAR),tmpCal.get(Calendar.MONTH),tmpCal.get(Calendar.DATE));
+		
+		//Strip hour, mins and seconds from leftDate 
+		tmpCal.setTime(leftDate);
+		Calendar calLeftDate = new GregorianCalendar(tmpCal.get(Calendar.YEAR),tmpCal.get(Calendar.MONTH),tmpCal.get(Calendar.DATE));
+		
+		long MILLSECS_PER_DAY = 1000 * 60 * 60 * 24;
+		long leftDateMilsec = calLeftDate.getTimeInMillis() + calLeftDate.getTimeZone().getOffset( calLeftDate.getTimeInMillis() ); 
+		long rightDateMilsec = calRigthDate.getTimeInMillis() + calRigthDate.getTimeZone().getOffset( calRigthDate.getTimeInMillis() );
+		long dayDiff = (leftDateMilsec - rightDateMilsec) / MILLSECS_PER_DAY;
+		
+		return (int) dayDiff;
+	}
 	/**
 	 * @param urlPath
 	 * @return
@@ -217,6 +240,29 @@ public class Helper {
 		return pathElements;
 	}
 	
+	public List<Event> sortEventsByStartTime(List<Event> events) {		
+		Comparator<Event> SENIORITY_ORDER =
+            new Comparator<Event>() {
+				public int compare(Event e1, Event e2) {
+					if (StringUtils.isEmpty(e2.getStartTimeStr()) && StringUtils.isEmpty(e2.getStartTimeStr())){
+						return 0;
+					}
+					if (StringUtils.isEmpty(e1.getStartTimeStr())){
+						return 1;
+					}
+					
+					if (StringUtils.isEmpty(e2.getStartTimeStr())){
+						return -1;
+					}
+					
+					return e1.getStartTimeStr().compareTo(e2.getStartTimeStr());
+			}	
+			};
+		Collections.sort(events, SENIORITY_ORDER);
+		return events;
+	}
+	
+	
 	public String nameToURLName(String name) {		
 		name = name.replace("'", ""); //remove any apostrophies
 		name = name.replaceAll("\\W+", " "); //replace any non-word characters with space
@@ -225,7 +271,11 @@ public class Helper {
 		return name;
 	}
 	
-	public String cleanUpInstructorName(String name) {	
+	public String cleanUpInstructorName(String name) {
+		if (name==null){
+			return null;
+		}
+		
 		name = name.replace('.', ' ');		
 		name = name.trim().toLowerCase(); 		
 		name = name.replaceAll("\\s+", " "); //replace any sequence of white space characters with a single dash -	

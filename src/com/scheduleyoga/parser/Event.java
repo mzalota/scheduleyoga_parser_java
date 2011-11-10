@@ -35,7 +35,6 @@ public class Event {
 	protected Date startTime;
 	protected String instructorName;
 	protected Studio studio = null;
-	protected String startTimeStr;
 	protected Date createdOn;
 	protected Date modifiedOn;
 	protected Instructor instructor = null;
@@ -102,21 +101,18 @@ public class Event {
 		//startTime.toString();
 	}
 
-	public void setStartTimeStr(String startTimeStr) {
-		
-		SimpleDateFormat formatter = new SimpleDateFormat("hh:mm");
-		Date dt;
-		try {
-			dt = (Date)formatter.parse(startTimeStr);
-			this.startTime = dt;
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		this.startTimeStr = startTimeStr;
-	}
+//	public void setStartTimeStr(String startTimeStr) {
+//		
+//		SimpleDateFormat formatter = new SimpleDateFormat("hh:mm");
+//		Date dt;
+//		try {
+//			dt = (Date)formatter.parse(startTimeStr);
+//			this.startTime = dt;
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
 	
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "start_time") //, nullable = false
@@ -197,8 +193,7 @@ public class Event {
 	public String toString() {
 		return "Event [id=" + id + ", studio_id=" + studio_id + ", comment="
 				+ comment + ", startTime=" + startTime + ", instructorName="
-				+ instructorName + ", studio=" + studio + ", startTimeStr="
-				+ startTimeStr + ", createdOn=" + createdOn + ", modifiedOn="
+				+ instructorName + ", studio=" + studio + ", createdOn=" + createdOn + ", modifiedOn="
 				+ modifiedOn + ", instructor=" + instructor + "]";
 	}
 	

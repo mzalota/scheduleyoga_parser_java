@@ -178,7 +178,7 @@ public class Parser {
 			event.setStudio(studio);			
 			
 			String instructorName = Helper.createNew().cleanUpInstructorName(event.getInstructorName());
-			if (instructorName != event.getInstructorName().trim()){
+			if (StringUtils.isEmpty(event.getInstructorName()) && (instructorName != event.getInstructorName().trim())){
 				if (!StringUtils.isEmpty(event.getInstructorName())) {
 					logger.warn("Invalid Instructor Name: -"+event.getInstructorName()+"- cleaned up is -"+instructorName+"-");
 				}
@@ -409,9 +409,6 @@ public class Parser {
 	
 	protected String parseMindAndBodyOnline2(Studio studio) throws FailingHttpStatusCodeException, IOException {
 
-
-
-
 		WebClient webClient = getWebClient();
 		
         URL url = new URL(studio.getUrlSchedule());
@@ -419,14 +416,29 @@ public class Parser {
         HtmlPage pageOuter;
         logger.info("Loading Page: "+url);
         pageOuter = (HtmlPage)webClient.getPage(url);        
-        //System.out.println("OUTER PAAGE");
-        //System.out.println(pageOuter.asXml());
         
         List<FrameWindow> frames = pageOuter.getFrames();        
         HtmlPage page = (HtmlPage) frames.get(1).getEnclosedPage();
         
-        //System.out.println("THE WHOLE PAAGE");
-        //System.out.println(page.asXml());
+        studio.deleteEvents();
+        String outputPage1 = ParseMindBodyOnlinePage(studio, webClient, page);
+        page = loadNextPage(page);
+        String outputPage2 = ParseMindBodyOnlinePage(studio, webClient, page);
+        
+        webClient.closeAllWindows();
+        
+        return outputPage1+"  "+outputPage2;
+	}
+
+	/**
+	 * @param studio
+	 * @param webClient
+	 * @param page
+	 * @return
+	 */
+	protected String ParseMindBodyOnlinePage(Studio studio,
+			WebClient webClient, HtmlPage page) {
+		//System.out.println(page.asXml());
         
         //System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "info");               
         
@@ -454,10 +466,7 @@ public class Parser {
         DBAccess.saveObject(parsingHist);
         
         String outputPage = parseTable2(studio, table);
-        
-        webClient.closeAllWindows();
-        
-        return outputPage;
+		return outputPage;
 	}
 
 	/**
@@ -524,7 +533,6 @@ public class Parser {
 		
 		List<Event> events = calendarSegment.extractEvents();
 		
-		studio.deleteEvents();
 		saveEventsOneList(studio, events);
         
         return eventParser.asHTMLTable(events);

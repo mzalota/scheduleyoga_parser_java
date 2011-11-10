@@ -2,9 +2,13 @@ package com.scheduleyoga.tests;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 
+import com.scheduleyoga.parser.Event;
 import com.scheduleyoga.parser.Helper;
 import com.scheduleyoga.parser.Parser;
 
@@ -50,6 +54,92 @@ public class SimpleTest extends TestCase {
 		 */
 		return new TestSuite(SimpleTest.class);
 	}
+	
+	public void testGetDayDiff_sameDateTime() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 14, 00);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 1, 14, 00);
+		
+		//EXECUTE
+		int daysDiff = Helper.createNew().getDayDiff(cal1.getTime(), cal2.getTime());
+		
+		//ASSERT
+		assertEquals(0, daysDiff);
+	}
+	
+	public void testGetDayDiff_sameDateDiffTime() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 8, 00);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 1, 14, 00);
+		
+		//EXECUTE
+		int daysDiff = Helper.createNew().getDayDiff(cal1.getTime(), cal2.getTime());
+		int daysDiffBackward = Helper.createNew().getDayDiff(cal2.getTime(), cal1.getTime());
+		
+		//ASSERT
+		assertEquals(0, daysDiff);				
+		assertEquals(0, daysDiffBackward);
+	}
+	
+	public void testGetDayDiff_diffDate_moreThen24HourDiff() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 8, 00);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 2, 14, 00);
+		
+		//EXECUTE
+		int daysDiff = Helper.createNew().getDayDiff(cal2.getTime(), cal1.getTime());
+		
+		//ASSERT
+		assertEquals(1, daysDiff);
+	}
+	
+	public void testGetDayDiff_diffDate_lessThen24HoursDiff() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 21, 00);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 2, 12, 00);
+		
+		//EXECUTE
+		int daysDiff = Helper.createNew().getDayDiff(cal2.getTime(), cal1.getTime());
+		
+		//ASSERT
+		assertEquals(1, daysDiff);
+	}
+	
+	public void testGetDayDiff_twoDaysApart_moreThen48HoursDiff() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 14, 00);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 3, 19, 30);
+		
+		//EXECUTE
+		int daysDiff = Helper.createNew().getDayDiff(cal2.getTime(), cal1.getTime());
+		int daysDiffBackward = Helper.createNew().getDayDiff(cal1.getTime(), cal2.getTime());
+		
+		//ASSERT
+		assertEquals(2, daysDiff);
+		assertEquals(-2, daysDiffBackward);
+	}
+	
+	public void testGetDayDiff_twoDaysApart_lessThen48HoursDiff() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 14, 00);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 3, 13, 30);
+		
+		//EXECUTE
+		int daysDiff = Helper.createNew().getDayDiff(cal2.getTime(), cal1.getTime());
+		int daysDiffBackward = Helper.createNew().getDayDiff(cal1.getTime(), cal2.getTime());
+		
+		//ASSERT
+		assertEquals(2, daysDiff);
+		assertEquals(-2, daysDiffBackward);
+	}
+	
+	
 	public void testContainsTime_basicAmericanTime() {
 		
 		//SETUP
@@ -399,6 +489,29 @@ public class SimpleTest extends TestCase {
 	}	
 	
 
+	public void testSortEventsByStartTime_simpleTimesInAfternoon() {
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 14, 00); //2:00pm on Nov 1,2011 
+		Calendar cal2 = new GregorianCalendar(2011, 11, 1, 13, 30); //1:30pm on Nov 1,2011
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+		Event event2 = Event.createNew();
+		event2.setStartTime(cal2.getTime());
+		
+		List<Event> eventsList = new ArrayList<Event>(2);
+		eventsList.add(0, event1);
+		eventsList.add(1, event2);
+		
+		//EXECUTE
+		List<Event> result = Helper.createNew().sortEventsByStartTime(eventsList);
+		
+		//ASSERT
+		assertEquals(event2, result.get(0));
+		assertEquals(event1, result.get(1));
+	}	
+	
 	public void testNameToURLName_variousWhiteSpaces() {
 		
 		//SETUP

@@ -42,11 +42,6 @@ public class MainLoop {
 		
 //		int i = 1;
 		for (final Studio studio : studios) {
-//			 if (studio.getNameForUrl().equals("om-yoga")){
-//			 //TODO: for now do not refresh Om Yoga. Only refresh MindbodyONly
-//			 studios
-//			 continue;
-//			 }
 //			 if (i>1){
 //				 break;
 //			 }

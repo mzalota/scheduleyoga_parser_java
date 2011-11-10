@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="C:/Program Files/Java/libs/mysql-connector-java-5.1.10/mysql-connector-java-5.1.10-bin.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/Java/libs/slf4j-1.6.2/slf4j-log4j12-1.6.2.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/Java/libs/apache-log4j-1.2.16/log4j-1.2.16.jar" sourcepath="C:/Program Files/Java/libs/apache-log4j-1.2.16/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/PowerMock"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
