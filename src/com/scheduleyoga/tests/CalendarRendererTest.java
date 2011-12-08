@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.SortedSet;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -112,6 +114,235 @@ public class CalendarRendererTest extends TestCase {
 		//ASSERT
 		assertEquals(1,renderer.countEvents());
 	}	
+	
+	
+	public void testGetAllDistinctDates_oneDate() {
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 13, 30);
+		
+		
+		Event event = Event.createNew();
+		event.setStartTime(cal1.getTime());
+		
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event);
+		SortedSet<Date> result = renderer.getAllDistinctDates();
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(1, result.size());		
+	}
+	
+	public void testGetAllDistinctDates_twoDates() {
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 13, 30);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 3, 14, 45);
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+
+		Event event2 = Event.createNew();
+		event2.setStartTime(cal2.getTime());
+
+		
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event1);
+		renderer.addEvent(event2);
+		SortedSet<Date> result = renderer.getAllDistinctDates();
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(2, result.size());		
+	}
+	
+	public void testGetFormatedDates_4days() {
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 13, 30);
+
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		List<Date> result = renderer.getFormattedDates(cal1.getTime(), 4);
+		
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(4, result.size());		
+	}
+	
+	public void testGetAllDistinctTimes_twoDates() {
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 6, 45);
+		Calendar cal2 = new GregorianCalendar(2011, 11, 3, 18, 30);
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+
+		Event event2 = Event.createNew();
+		event2.setStartTime(cal2.getTime());
+
+		
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event1);
+		renderer.addEvent(event2);
+		SortedSet<Date> result = renderer.getAllDistinctTimes();
+				
+		//ASSERT
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		assert(result.first().compareTo(result.last())<0);
+		
+		String time1 = new SimpleDateFormat("HH:mm").format(result.first());
+		String time2 = new SimpleDateFormat("HH:mm").format(result.last());
+		
+//		System.out.println("calnedar 1 is "+cal1);
+//		System.out.println("calnedar 2 is "+cal2);
+//		System.out.println("event1 startTime "+event1.getStartTime());
+//		System.out.println("event2 startTime "+event2.getStartTime());
+//		System.out.println("resuilt is "+result);
+//		System.out.println("tim1 is "+time1+" and time2 is: "+time2);
+		
+		assertThat(time1, containsString("06:45"));
+		assertThat(time2, containsString("18:30"));
+	}
+	
+
+	public void testGetEventsDateAndTime_twoDifferentTimes() {
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 6, 45);
+		Calendar cal1Date = new GregorianCalendar(2011, 11, 1);
+		Calendar cal1Time = new GregorianCalendar(1976, 4, 23, 6, 45);
+		
+		Calendar cal2 = new GregorianCalendar(2011, 11, 3, 18, 30);
+		Calendar cal2Date = new GregorianCalendar(2011, 11, 3);
+		Calendar cal2Time = new GregorianCalendar(1956, 10, 13, 18, 30);
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+
+		Event event2 = Event.createNew();
+		event2.setStartTime(cal2.getTime());
+		
+		
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event1);
+		renderer.addEvent(event2);
+				
+		//ASSERT
+		List<Event> result = renderer.getEventsDateAndTime(cal1Date.getTime(),cal1Time.getTime());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(event1, result.get(0));
+		
+		result = renderer.getEventsDateAndTime(cal2Date.getTime(),cal2Time.getTime());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(event2, result.get(0));
+	}	
+	
+	public void testGetEventsDateAndTime_differentDatesSameTimes() {
+		int TIME_HOUR = 13;
+		int TIME_MINUTE = 45;
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, TIME_HOUR, TIME_MINUTE);
+		Calendar cal1Date = new GregorianCalendar(2011, 11, 1);
+		Calendar cal1Time = new GregorianCalendar(1976, 4, 23, TIME_HOUR, TIME_MINUTE);
+		
+		Calendar cal2 = new GregorianCalendar(2011, 11, 3, TIME_HOUR, TIME_MINUTE);
+		Calendar cal2Date = new GregorianCalendar(2011, 11, 3);
+		Calendar cal2Time = new GregorianCalendar(1956, 10, 13, TIME_HOUR, TIME_MINUTE);
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+
+		Event event2 = Event.createNew();
+		event2.setStartTime(cal2.getTime());
+		
+		
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event1);
+		renderer.addEvent(event2);
+				
+		//ASSERT
+		List<Event> result = renderer.getEventsDateAndTime(cal1Date.getTime(),cal1Time.getTime());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(event1, result.get(0));
+		
+		result = renderer.getEventsDateAndTime(cal2Date.getTime(),cal2Time.getTime());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(event2, result.get(0));
+	}	
+	
+	public void testGetEventsDateAndTime_sameDatesSameTimes() {
+		int TIME_HOUR = 16;
+		int TIME_MINUTE = 30;
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, TIME_HOUR, TIME_MINUTE);
+		Calendar cal1Date = new GregorianCalendar(2011, 11, 1);
+		Calendar cal1Time = new GregorianCalendar(1976, 4, 23, TIME_HOUR, TIME_MINUTE);
+		
+		Calendar cal2 = new GregorianCalendar();
+		cal2.setTime((Date)cal1.getTime().clone());
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+		event1.setComment("blabla Event1");
+
+		Event event2 = Event.createNew();
+		event2.setStartTime(cal2.getTime());
+		event2.setComment("blabla Event2");
+		
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event1);
+		renderer.addEvent(event2);
+				
+		//ASSERT
+		List<Event> result = renderer.getEventsDateAndTime(cal1Date.getTime(),cal1Time.getTime());
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		
+		assertThat(result, hasItems(event1));
+		assertThat(result, hasItems(event2));
+	}	
+	
+	public void testGetEventsDateAndTime_differentSeconds() {
+
+		int SECONDS1 = 34;		
+		int SECONDS2 = 5;
+		
+		int MILLISECONDS1 = 234;
+		int MILLISECONDS2 = 342;
+		
+		//SETUP
+		Calendar cal1 = new GregorianCalendar(2011, 11, 1, 6, 45, SECONDS1);
+		cal1.set(Calendar.MILLISECOND, MILLISECONDS1);
+		
+		Calendar cal1Date = new GregorianCalendar(2011, 11, 1);
+		Calendar cal1Time = new GregorianCalendar(1976, 4, 23, 6, 45, SECONDS2);
+		cal1Time.set(Calendar.MILLISECOND, MILLISECONDS2);
+		
+		Event event1 = Event.createNew();
+		event1.setStartTime(cal1.getTime());
+
+		//EXECUTE
+		CalendarRenderer renderer = CalendarRenderer.createNew();
+		renderer.addEvent(event1);
+				
+		//ASSERT
+		List<Event> result = renderer.getEventsDateAndTime(cal1Date.getTime(),cal1Time.getTime());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(event1, result.get(0));
+	}	
+	
 	
 //	public void testRender_oneEvent() {
 //		//SETUP

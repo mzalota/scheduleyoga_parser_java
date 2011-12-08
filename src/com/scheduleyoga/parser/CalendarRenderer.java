@@ -48,6 +48,112 @@ public class CalendarRenderer {
 		return events.size();
 	}
 	
+	public SortedSet<Date> getAllDistinctDates(){
+
+		SortedSet<Date> allDates = new TreeSet<Date>();
+		
+		//TODO: inside Map do not use List<Event> of fixed length - it is awkward. instead Use Map<int, Event>
+		//Helper helper = Helper.createNew();
+		//int dayDiff = helper.getDayDiff(event.getStartTime(), firstDate);
+		for (Event event : events){
+			
+			Calendar startTimeCal = new GregorianCalendar();
+			startTimeCal.setTime(event.getStartTime());
+			
+			Calendar justDateCal = new GregorianCalendar();			
+			justDateCal.set(startTimeCal.get(Calendar.YEAR),
+						 startTimeCal.get(Calendar.MONTH),
+						 startTimeCal.get(Calendar.DATE));
+			
+			allDates.add(justDateCal.getTime());			
+		}
+		
+		return allDates;
+	}
+	
+	public List<Date> getFormattedDates(final Date startDate, int numDays){
+		List<Date> allDates = new ArrayList();
+
+		Helper helper = Helper.createNew();
+		Date tmpDate = helper.justDateWithoutTime(startDate);
+		Calendar tmpCal = new GregorianCalendar ();
+		for (int i=0;i<numDays;i++){
+			tmpCal.setTime(tmpDate);
+			tmpCal.add(Calendar.DAY_OF_MONTH, i);
+			allDates.add(tmpCal.getTime());
+		}
+		
+		//startDate = helper.justDateWithoutTime(startDate);
+//		
+//		Calendar tmpCal = new GregorianCalendar ();
+//		tmpCal.setTime(startDate);
+//		tmpCal.add(Calendar.DAY_OF_MONTH, numDays+1);
+//		
+//		Date endDate = tmpCal.getTime();
+		
+		
+		
+		
+//		for (Date dt : getAllDistinctDates()){
+//			if (helper.getDayDiff(dt, startDate)<0){
+//				continue;
+//			}
+//			if (helper.getDayDiff(dt, startDate)>numDays){
+//				break;
+//			}
+//			allDates.add(dt);
+//		}
+//		
+		return allDates;
+	}
+	
+	
+	public SortedSet<Date> getAllDistinctTimes(){
+		SortedSet<Date> allTimes = new TreeSet<Date>();
+		
+		Calendar startTimeCal = new GregorianCalendar();
+		Calendar justDateCal = new GregorianCalendar();	
+		for (Event event : events){
+			startTimeCal.setTime(event.getStartTime());
+			justDateCal.set(1900,1,1, startTimeCal.get(Calendar.HOUR_OF_DAY), startTimeCal.get(Calendar.MINUTE),0);
+			allTimes.add(justDateCal.getTime());			
+		}
+		
+		return allTimes;
+	}
+
+	public List<Event> getEventsDateAndTime(Date date, Date time){
+		
+		Map<Date, List<Event>> map = new HashMap<Date, List<Event>>();
+		Calendar tmpCal = new GregorianCalendar(); //Used to reset seconds field to zero
+		for (Event event : events){
+			tmpCal.setTime(event.getStartTime());
+			tmpCal.set(Calendar.SECOND, 0);
+			tmpCal.set(Calendar.MILLISECOND, 0);
+			if(!map.containsKey(tmpCal.getTime())){
+				map.put(tmpCal.getTime(), new ArrayList<Event>());
+			}
+			map.get(tmpCal.getTime()).add(event);
+		}
+		
+		Calendar targetTimeCal = new GregorianCalendar();
+		targetTimeCal.setTime(time);
+		
+		
+		Calendar targetDateCal = new GregorianCalendar();
+		targetDateCal.setTime(date);
+		targetDateCal.set(Calendar.HOUR_OF_DAY, targetTimeCal.get(Calendar.HOUR_OF_DAY));
+		targetDateCal.set(Calendar.MINUTE, targetTimeCal.get(Calendar.MINUTE));
+		targetDateCal.set(Calendar.SECOND, 0);
+		targetDateCal.set(Calendar.MILLISECOND, 0);
+		
+		if(map.containsKey(targetDateCal.getTime())){
+			return map.get(targetDateCal.getTime());
+		}
+		
+		return Collections.EMPTY_LIST;		
+	}
+	
 	public String render(Date firstDate, int daysInCalendar){
 		
 		if (countEvents()<=0){
@@ -208,4 +314,5 @@ public class CalendarRenderer {
 		}
 		return outty;
 	}
+
 }

@@ -64,6 +64,23 @@ public class Helper {
 		return false;
 	}
 	
+	public Date justDateWithoutTime(Date inDate) {
+		
+		if (inDate == null){
+			return null;
+		}
+		
+		Calendar startTimeCal = new GregorianCalendar();
+		startTimeCal.setTime(inDate);
+		
+		Calendar justDateCal = new GregorianCalendar();			
+		justDateCal.set(startTimeCal.get(Calendar.YEAR),
+					 startTimeCal.get(Calendar.MONTH),
+					 startTimeCal.get(Calendar.DATE));
+		
+		return justDateCal.getTime();
+	}
+	
 	public boolean containsTime(String text) {
 
 		// Pattern that matches "4 pm " --"(\\d{1,2}\\s*[aApP][mM]{0,2})"
