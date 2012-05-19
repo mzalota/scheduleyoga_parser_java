@@ -295,7 +295,7 @@ public class Helper {
 		
 		name = name.replace('.', ' ');		
 		name = name.trim().toLowerCase(); 		
-		name = name.replaceAll("\\s+", " "); //replace any sequence of white space characters with a single dash -	
+		name = name.replaceAll("\\s+", " "); //replace any sequence of white space characters with a single space	
 		if (includesSuspiciousWords(name)){
 			return null;
 		}
@@ -315,12 +315,14 @@ public class Helper {
 		name = WordUtils.capitalize(name,new char[] { '-', ' ', '\'' });
 		
 		//TODO: rewrite this using regex.
-		if (name.substring(name.length()-2, name.length()-1).equals(" ")){
-			//the character before last is a space. It may mean that the instructor's last name is abbrivated
-			if (StringUtils.countMatches(name, " ") == 1){
-				//this string contains only one space, so it ends with a single letter -- its an abbriviation.
-				return null;
-			}			
+		if (name.length()>2){
+			if (name.substring(name.length()-2, name.length()-1).equals(" ")){
+				//the character before last is a space. It may mean that the instructor's last name is abbrivated
+				if (StringUtils.countMatches(name, " ") == 1){
+					//this string contains only one space, so it ends with a single letter -- its an abbriviation.
+					return null;
+				}			
+			}
 		}
 		
 		return name;

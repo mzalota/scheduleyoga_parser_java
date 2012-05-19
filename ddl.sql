@@ -16,7 +16,16 @@ CREATE TABLE `events` (
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=22196 DEFAULT CHARSET=latin1;
 	
-	
+CREATE TABLE `events_styles` (
+  `id` int(11) NOT NULL auto_increment,
+  `event_id` int(11) default NULL,
+  `name` varchar(100) default NULL,
+  `created_on` datetime default NULL,
+  `modified_on` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB;
+
+
 create table events_staging (	
 	id int not null auto_increment primary key, 
 	studio_id int, 

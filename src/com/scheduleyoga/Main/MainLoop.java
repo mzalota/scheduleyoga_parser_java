@@ -17,9 +17,17 @@ import com.scheduleyoga.parser.Parser;
 
 public class MainLoop {
 
-	private static final int NTHREADS = 6;
+	private final int numThreads;
+	private int numStudios;
+	
+	private static final int NTHREADS = 1;
 	private static final Executor exec = Executors.newFixedThreadPool(NTHREADS);
 	private static final Logger logger = Logger.getLogger(MainLoop.class);
+	
+	public MainLoop(int numThreads){
+		this.numThreads = numThreads;
+		numStudios = 0;
+	}
 	
 	public void refreshAllStudios(boolean flag) {
 
@@ -40,12 +48,16 @@ public class MainLoop {
 //			return;
 //		}				
 		
-//		int i = 1;
+		int studiosCount = 0;
+		
+		logger.info("MainLoop.numThreads is autowired to "+numThreads);
+		logger.info("MainLoop.numStudios is autowired to "+numStudios);
+		
 		for (final Studio studio : studios) {
-//			 if (i>1){
-//				 break;
-//			 }
-//			 i++;
+			 if (numStudios>0 && studiosCount>numStudios){
+				 break;
+			 }
+			 studiosCount++;
 
 			final String studioName = studio.getName();
 			logger.info("In The loop reading studio: " + studioName);
@@ -54,9 +66,9 @@ public class MainLoop {
 					Parser parser;
 					parser = Parser.createNew(Parser.STUDIO_JOSCHI_NYC);
 					try {
-						logger.error("Starting To Process Studio: " + studioName);
+						logger.info("Starting To Process Studio: " + studioName+", id="+studio.getId());
 						parser.parseStudioSite(studio);
-						logger.error("Finished Processing Studiooo: " + studioName);
+						logger.info("Finished Processing Studiooo: " + studioName+", id="+studio.getId());
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -65,7 +77,21 @@ public class MainLoop {
 			};
 			exec.execute(task);
 
-			logger.info("At the end of the loop - studio: " + studioName);
+			logger.info("At the end of the loop - studio: " + studioName+", id="+studio.getId());
 		}
+	}
+
+	/**
+	 * @return the exec
+	 */
+	public static Executor getExec() {
+		return exec;
+	}
+
+	/**
+	 * @param numStudios the numStudios to set
+	 */
+	public void setNumStudios(int numStudios) {
+		this.numStudios = numStudios;
 	}
 }

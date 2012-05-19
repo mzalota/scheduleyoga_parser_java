@@ -64,6 +64,7 @@ import com.scheduleyoga.dao.DBAccess;
 import com.scheduleyoga.dao.Instructor;
 import com.scheduleyoga.dao.ParsingHistory;
 import com.scheduleyoga.dao.Studio;
+import com.scheduleyoga.dao.Style;
 
 
 public class Parser {
@@ -183,6 +184,10 @@ public class Parser {
 					logger.warn("Invalid Instructor Name: -"+event.getInstructorName()+"- cleaned up is -"+instructorName+"-");
 				}
 			}
+			
+			Set<String> styleNames = Style.styleNamesFromClassName(event.getComment());
+			logger.info("ClassName is: "+event.getComment()+", styleNames are: "+styleNames);
+			event.setStyleNames(styleNames);
 			
 			Instructor instructor = Instructor.fetchInstructorByName(instructorName,studio);
 			if (instructor != null) {
@@ -418,12 +423,12 @@ public class Parser {
         pageOuter = (HtmlPage)webClient.getPage(url);        
         
         List<FrameWindow> frames = pageOuter.getFrames();        
-        HtmlPage page = (HtmlPage) frames.get(1).getEnclosedPage();
+        HtmlPage page = (HtmlPage) frames.get(0).getEnclosedPage(); //TODO: just changed 1 to 0
         
         studio.deleteEvents();
         String outputPage1 = ParseMindBodyOnlinePage(studio, webClient, page);
         page = loadNextPage(page);
-        String outputPage2 = ParseMindBodyOnlinePage(studio, webClient, page);
+       	String outputPage2 = ParseMindBodyOnlinePage(studio, webClient, page);
         
         webClient.closeAllWindows();
         
@@ -442,25 +447,32 @@ public class Parser {
         
         //System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", "info");               
         
+		if (page == null){
+			logger.error("Page parameter is null");
+			return null;
+		}
+			
         String xPathParam = studio.getXpath(); //xPath.get(studioID); 
                 
-        logger.info("XPath is: "+xPathParam);
-        
         //TODO: Hardcoded XPath for MindBodyOnline
         xPathParam = "/html/body/div[4]/div/div/div/table/tbody/tr[2]/td/table";
+        xPathParam = "//*[@id=\"classSchedule-header\"]";
+        xPathParam =  "//*[@id=\"classSchedule-mainTable\"]";
+        logger.info("XPath is: "+xPathParam);
         List<HtmlElement> elements = (List<HtmlElement>) page.getByXPath(xPathParam);
-                
+        logger.debug("Count of elements: "+elements.size());
+        
         if (elements.size() <=0 ){
+        	logger.error("COULD NOT FIND specified XPath: "+xPathParam);
+        	logger.debug("Not too good: "+page.asXml());
         	webClient.closeAllWindows();
-        	String msg = "COULD NOT FIND specified XPath: "+xPathParam;
-        	logger.error(msg);
-        	return "</br><strong>"+msg+"</strong></br>";
+        	//String msg = "COULD NOT FIND specified XPath: "+xPathParam;
+        	return "</br><strong>COULD NOT FIND specified XPath: "+xPathParam+"</strong></br>";
         }
     	HtmlTable table = (HtmlTable) page.getByXPath(xPathParam).get(0);        
     	String calendarXHTML = table.asXml();
              
-    	logger.info("JUST THE CALENDAR TABLE");
-        //System.out.println(calendarXHTML);
+    	logger.debug("CalendarTable XML has "+calendarXHTML.length()+" characters");
         
         ParsingHistory parsingHist = ParsingHistory.createNew(studio.getId(), calendarXHTML);
         DBAccess.saveObject(parsingHist);
@@ -477,7 +489,8 @@ public class Parser {
 		//System.getProperties().put("org.apache.commons.logging.simplelog.defaultlog", logLevel);
 		
 		WebClient webClient = new WebClient();
-		webClient.setCssEnabled(false);
+		webClient.setCssEnabled(true); //false
+		//webClient.setThrowExceptionOnScriptError(false); 
 		//webClient.setJavaScriptEnabled(false);
 		
 		
@@ -488,6 +501,7 @@ public class Parser {
 //			@Override
 //			public void notify(String arg0, Object arg1) {
 //				// TODO Auto-generated method stub
+//				System.out.println("In setIncorrectnessListener.notify: "+arg0);
 //			}
 //		});
 
@@ -512,6 +526,7 @@ public class Parser {
 //			@Override
 //			public void scriptException(HtmlPage arg0, ScriptException arg1) {
 //				// TODO Auto-generated method stub
+//				System.out.println("In scriptException");
 //			}
 //			@Override
 //			public void malformedScriptURL(HtmlPage arg0, String arg1, MalformedURLException arg2) {
@@ -520,8 +535,10 @@ public class Parser {
 //			@Override
 //			public void loadScriptError(HtmlPage arg0, URL arg1, Exception arg2) {
 //				// TODO Auto-generated method stub
+//				System.out.println("In loadScriptError");
 //			}
 //		});
+		
 		return webClient;
 	}
 	
@@ -532,6 +549,8 @@ public class Parser {
 		SegmentHorizontal calendarSegment = (SegmentHorizontal) SegmentHorizontal.createNewFromElement(table, eventParser);
 		
 		List<Event> events = calendarSegment.extractEvents();
+
+		logger.debug("Extracted "+events.size()+" events");
 		
 		saveEventsOneList(studio, events);
         
@@ -678,7 +697,6 @@ public class Parser {
 	
 	protected HtmlPage loadNextPage(HtmlPage pageTwo){
 		
-		
 	    //HtmlForm form = (HtmlForm) page.getForms().get(0);
         //HtmlTextInput text = (HtmlTextInput) form.getInputByName("q");
         //text.setValueAttribute("HtmlUnit");
@@ -694,10 +712,9 @@ public class Parser {
 		
 		
         String btnXPath = "//*[@id=\"week-arrow-r\"]";
-        
         HtmlElement btn = (HtmlElement) pageTwo.getElementById("week-arrow-r");
         
-        System.out.println("Hello Max 00: Found Button:"+btn.toString());
+        logger.info("Hello Max 00: Found Button:"+btn.toString());
         
         HtmlPage page2;
 		try {
@@ -707,11 +724,10 @@ public class Parser {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			System.out.println("could not load next page");
+			logger.info("Could not load next page:"+pageTwo.getUrl().toString());
 			System.exit(0);
 		}
         return null;
-        
 	}
 	
     protected static String xmlToString(Node node) {

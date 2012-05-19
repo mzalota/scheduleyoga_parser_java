@@ -35,7 +35,7 @@ import com.scheduleyoga.parser.Helper;
 
 @Entity
 @Table(name = "instructors")
-public class Instructor {
+public class Instructor implements Comparable<Instructor> {
 
 	private static final Logger logger = Logger.getLogger(Instructor.class);
 	
@@ -191,5 +191,42 @@ public class Instructor {
 		return "Instructor [id=" + id + ", name=" + name + ", nameForUrl="
 				+ nameForUrl + ", aliases=" + aliases + ", createdOn="
 				+ createdOn + ", modifiedOn=" + modifiedOn + "]";
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof Instructor)) {
+			return false;
+		}
+		Instructor other = (Instructor) obj;
+		if (id != other.id) {
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public int compareTo(Instructor p) {
+		return this.getName().compareTo(p.getName());
 	}
 }
