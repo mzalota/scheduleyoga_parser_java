@@ -48,6 +48,7 @@ import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.FrameWindow;
 import com.gargoylesoftware.htmlunit.html.HTMLParserListener;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -64,6 +65,7 @@ import com.scheduleyoga.dao.DBAccess;
 import com.scheduleyoga.dao.Instructor;
 import com.scheduleyoga.dao.ParsingHistory;
 import com.scheduleyoga.dao.Studio;
+import com.scheduleyoga.dao.StudioOld;
 import com.scheduleyoga.dao.Style;
 
 
@@ -208,8 +210,19 @@ public class Parser {
 				return parseMindAndBodyOnline2(studio);
 			case StudioOld.STUDIO_ID_KAIAYOGA:
 				return parseMindAndBodyOnline2(studio);
+			case Studio.STUDIO_FRESH_YOGA:
+			try {
+				return parseFreshYoga(studio);
+			} catch (FailingHttpStatusCodeException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ParsingErrorException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}				
 			default:
-				return parseMindAndBodyOnline2(studio);				
+				return parseMindAndBodyOnline2(studio);	
+				
 		}
 	}
 	
@@ -390,6 +403,143 @@ public class Parser {
 		for (final HtmlTableCell cell : row.getCells()) {
 			System.out.println(" Columns: " + cell.asText());
 		}
+	}
+	
+	
+	protected List<String> buildParts(HtmlElement subRow) {
+
+		ElementParser textExtractor = new ElementParser();
+		textExtractor.parseDocument(subRow.asXml());
+		return textExtractor.getValues();
+	}
+
+	
+	protected String parseFreshYoga(Studio studio) throws FailingHttpStatusCodeException, IOException, ParsingErrorException{
+		
+		WebClient webClient = new WebClient();
+        URL url = new URL(studio.getUrlSchedule()); 
+		
+        HtmlPage page = (HtmlPage) webClient.getPage(url);
+        
+        HtmlElement schSection = (HtmlElement) page.getByXPath(studio.getXpath()).get(0);
+        
+        //DomNodeList<HtmlElement> listOfSchedules = schSection.getElementsByTagName("table");
+        
+        List<HtmlTable> schedSections = (List<HtmlTable>) schSection.getByXPath("//*[@id=\"column2\"]/div/table");
+        
+        if (schedSections.size()<1){
+        	//TODO: log error/warning that we could not parse the page.
+        	return "";
+        }
+        
+        Helper helper = Helper.createNew();
+        
+        List<Event> events = new ArrayList<Event>();
+        for (HtmlTable tbl : schedSections){
+        	String dayOfTheWeek = tbl.getPreviousSibling().asText();
+        	
+        	boolean afterNoon = false;
+        	for (int rowNum = 0; rowNum< tbl.getRowCount(); rowNum++){
+        		List<HtmlTableCell> cells = tbl.getRow(rowNum).getCells();
+        		if (cells.size()<2){
+        			//TODO: Show warning that could not parse event
+        			continue;
+        		}
+        		String time = cells.get(0).asText();
+        		List<String> descr = buildParts(cells.get(1));
+        		
+        		if (descr.size()<2){
+        			//TODO: Show warning that could not parse the event
+        			continue;
+        		}
+        		String className = descr.get(0);
+        		String instructorName = descr.get(1);
+        		
+        		if (StringUtils.isBlank(className)){
+        			//TODO: Show warning that could not parse the event
+        			continue;
+        		}
+        		
+        		if (StringUtils.isBlank(instructorName)){
+        			//TODO: Show warning that could not parse the event
+        			continue;
+        		}
+        		
+        		Date startTime = freshYoga_deriveStartTime(time, dayOfTheWeek, afterNoon);
+        		if (startTime == null){
+        			continue;
+        		}
+        		
+        		if (new SimpleDateFormat("a").format(startTime).equalsIgnoreCase("pm")){
+        			//This is the first time that we saw a time in the afternoon. 
+        			//set afteNoon flag to be true - all times that follow will be in the afternoon.
+        			afterNoon=true;
+        		}         		
+    			
+        		logger.info("dayOfTheWeek: "+dayOfTheWeek+" time is: "+time+" className is: "+className+" instructorName is: "+instructorName+" startTime: "+startTime);
+        		
+        		Event event = Event.createNew();
+        		event.setStartTime(startTime);
+        		event.setInstructorName(instructorName);
+        		event.setComment(className);
+        		event.setStyleNames(Style.styleNamesFromClassName(className));
+
+        		
+        		//Event For next week
+        		Calendar cal = new GregorianCalendar();
+        		cal.setTime(startTime);
+        		cal.add(Calendar.DATE, 7);
+        		Event eventNextWeek = Event.createNew();
+        		eventNextWeek.setStartTime(cal.getTime());
+        		eventNextWeek.setInstructorName(instructorName);
+        		eventNextWeek.setComment(className);
+        		eventNextWeek.setStyleNames(Style.styleNamesFromClassName(className));
+        		
+        		events.add(event);
+        		events.add(eventNextWeek);
+        	}        	
+        }
+        
+        if(events.size()<1){
+        	//TODO: Show warning that we did not find any events.
+        }
+        
+        //Delete all the events.
+        studio.deleteEvents();
+        saveEventsOneList(studio, events);        
+        
+        return "";
+	}
+
+
+	protected Date freshYoga_deriveStartTime(String time, String dayOfTheWeek, boolean afterNoon){
+		
+		Helper helper = Helper.createNew();
+		
+	   	Date curDate;
+		try {
+			curDate = helper.nextDateFromDayOfTheWeek(dayOfTheWeek, new Date());
+		} catch (ParseException e1) {
+			return null;		
+		}
+		
+		String[] timeArr = StringUtils.split(time, "-");
+		String startTimeStr = timeArr[0].trim();
+		
+		Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);    			
+		String eventTimeStr = new SimpleDateFormat("HH:mm").format(eventTime);
+		
+		String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(curDate);
+		
+		Date startTime = null;
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");		
+		try {
+			startTime = (Date)formatter.parse(eventDateStr+" "+eventTimeStr);
+		} catch (ParseException e) {
+			return null;
+		}
+		
+		return startTime;
 	}
 	
 	protected String parseOmYoga(Studio studio) throws FailingHttpStatusCodeException, IOException{
@@ -780,6 +930,124 @@ public class Parser {
 //		
 //	}
 
+    
+    public class EventsParser_FreshYoga implements EventsParser {
+		private String tmpVar;
+		private int colNum;
+		private boolean afterNoon = false;
+		
+		public int getColumnNumber() {
+			return colNum;
+		}
+
+		public void setColumnNumber(int colNum) {
+			this.colNum = colNum;
+		}
+
+		public EventsParser_FreshYoga() {
+		}
+
+		/**
+		 * @param parts
+		 */
+		public Event createEventFromParts(List<String> parts) {
+			if (parts.size() <= 0) {
+				return null;
+			}
+			Event event = Event.createNew();
+			
+			if (!Helper.createNew().containsTime(parts.get(0))){
+				//The first part is not a time string. This is an invalid event.
+				return null;
+			}
+			
+			Date startTime = convertStrToDate(parts.get(0));
+			//event.setStartTimeStr(parts.get(0));
+			event.setStartTime(startTime);
+			parts.remove(0);
+
+			if (parts.size() > 1 ){
+				event.setInstructorName(parts.get(parts.size()-1));
+				parts.remove(parts.size()-1);
+			}
+			
+			String txt3 = StringUtils.join(parts.toArray(), " ");
+			event.setComment(txt3);					
+			
+			
+			return event;
+		}
+		
+		//@Override
+		public String asHTMLTable(List<List<List<Event> > > allEvents) {
+			String output = "<table>";
+			for (int rowNum = 0; rowNum < allEvents.size(); rowNum++) {
+				output = output + "<tr style=\"border: 1px solid red;\">";
+				for (int colNum=0; colNum < allEvents.get(rowNum).size(); colNum++) {
+					output = output + "<td style=\"border: 1px solid red;\">";
+					for (int eventNum = 0; eventNum < allEvents.get(rowNum).get(colNum).size(); eventNum++){
+						Event event = allEvents.get(rowNum).get(colNum).get(eventNum);
+						//save event to DB
+						//event.saveToDB();
+						//createHTML
+						output = output + buildHTMLForEvent(event);
+					}
+					output = output + "</td>";
+				}
+				output = output + "</tr>\n";
+			}
+			output = output + "</table>";
+			return output;
+		}
+		
+		/**
+		 * @param events
+		 * @return String output
+		 */
+		public String buildHTMLForEvent(Event event) {
+			
+			if (null == event){
+				return "";
+			}
+			
+			String output = "";
+			output = output + "<div style=\"color: red\">" + event.getStartTimeStr() + "</div> <br/>";
+			output = output + "<div style=\"color: blue\">" + event.getComment()+ "</div> <br/>";
+			output = output + "<div style=\"color: black\">" + event.getInstructorName() + "</div> <br/>";
+			output = output + "<hr />";
+
+			return output;
+		}
+		
+		protected Date convertStrToDate(String startTimeStr) {
+			
+			Helper helper = Helper.createNew();
+			Date eventDate = helper.nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
+			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(eventDate); 			
+			
+			Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			String eventTimeStr = new SimpleDateFormat("hh:mm a").format(eventTime);
+			
+			//SimpleDateFormat formatterAmPm = ;
+			
+			if (new SimpleDateFormat("a").format(eventTime).equalsIgnoreCase("pm")){
+				//This is the first time that we saw a time in the afternoon. 
+				//set afteNoon flag to be true - all times that follow will be in the afternoon.
+				afterNoon=true;
+			}
+			
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm a");
+			Date dt;
+			try {
+				return (Date)formatter.parse(eventDateStr+" "+eventTimeStr);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
+		}
+	}
+    
 	public class EventsParser_OmYoga implements EventsParser {
 		private String tmpVar;
 		private int colNum;

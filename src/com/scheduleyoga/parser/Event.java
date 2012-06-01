@@ -225,16 +225,19 @@ public class Event {
 		return events;
 	}
 
-	public static List<Event> findEventsForStyleForDate(Style style, Date date){
+	public static List<Event> findEventsForStyleForDate(Style style, Date date, String stateNameUrl){
 		
-		String queryStr = 	" select ev " +
-							" from Event as ev "+
-							" join ev.styleNames st " +
-							" where date(ev.startTime) = date(:dateParam) " +
-							"    and st in (:styleName) ";
+		String queryStr = 	" SELECT ev " +
+							" FROM Event AS ev "+
+							" JOIN ev.styleNames AS st " +
+							" JOIN ev.studio AS std " +
+							" WHERE date(ev.startTime) = date(:dateParam) " +
+							"    AND st in (:styleName) " +
+							"    AND std.state = :stateName ";
 		Query q = DBAccess.openSession().createQuery(queryStr);
 		q.setParameter("dateParam", date);
 		q.setParameter("styleName", style.getName());
+		q.setParameter("stateName", stateNameUrl);
 		
 		@SuppressWarnings("unchecked")
 		List<Event> events = (List<Event>) q.list();

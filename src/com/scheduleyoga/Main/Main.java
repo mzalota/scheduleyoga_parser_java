@@ -24,18 +24,17 @@ import net.fortuna.ical4j.util.UidGenerator;
 import java.io.*;
 
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.ListIterator;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 
 //import antlr.collections.List;
 
-import com.scheduleyoga.dao.Studio;
 import com.scheduleyoga.parser.Parser;
 import com.scheduleyoga.tests.SimpleTest;
 
@@ -63,9 +62,15 @@ public class Main {
 		Logger logger = LoggerFactory.getLogger(Main.class);
 	    logger.info("Hello Main Class");		
 	    
-		XmlBeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource("MainLoop.xml"));
+	    
+//	    ClassPathResource resource = new ClassPathResource("MainLoop.xml");	    
+//		XmlBeanFactory beanFactory = new XmlBeanFactory(resource);		
+//		MainLoop myBean = (MainLoop) beanFactory.getBean("MainLoopBean");
 		
-		MainLoop myBean = (MainLoop) beanFactory.getBean("MainLoopBean");
+		
+	    ApplicationContext context = new ClassPathXmlApplicationContext("MainLoop.xml"); //com/scheduleyoga/Main/
+		MainLoop myBean  = (MainLoop) context.getBean("MainLoopBean");  
+		
 		myBean.refreshAllStudios(false);
 		
 		logger.info("Done");

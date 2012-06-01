@@ -4,7 +4,9 @@
 package com.scheduleyoga.dao;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,9 +18,12 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.apache.commons.lang.WordUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
+
+import com.scheduleyoga.common.LookUp;
 
 
 /**
@@ -30,6 +35,8 @@ import org.hibernate.Session;
 @Table(name = "studios")
 public class Studio {
 
+	static public final int STUDIO_FRESH_YOGA = 104;
+	
 	private static final Logger logger = Logger.getLogger(Studio.class);
 	
 	@Id
@@ -39,6 +46,9 @@ public class Studio {
 
 	@Column(name = "name", length = 100)
 	protected String name;
+	
+	@Column(name = "state", length = 100)
+	protected String state;
 
 	@Column(name = "name_url", unique = true, length = 100)
 	protected String nameForUrl;
@@ -176,5 +186,24 @@ public class Studio {
 			return false;
 		}
 		return true;
+	}
+
+
+	/**
+	 * @param state the state to set
+	 */
+	public void setStateForUrl(String state) {
+		this.state = state;
+	}
+	
+	public String getStateForUrl() {
+		return state;
+	}
+	
+	public String getState() {
+		String stateName = getStateForUrl();
+		stateName = stateName.replace("-", " ");
+		stateName = WordUtils.capitalizeFully(stateName);
+		return stateName;
 	}
 }

@@ -38,47 +38,70 @@ public class MainLoop {
 
 		//https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=10/24/2011&loc=0&page=1&pMode=&prodid=&stype=7&classid=0&catid=&justloggedin=&nLgIn=%22%20name=%22mainFrame%22%3E
 		
-		List<Studio> studios = Studio.getAllStudios();
+		//List<Studio> studios = Studio.getAllStudios();				
 		
-//		Instructor instructor= Instructor.createInstructor("Max Zalota", "max-zalota", null);
-//		instructor.linkToStudio(studios.get(0));
-//		DBAccess.saveObject(instructor);
-//		if (flag){
-//			logger.info("Just created Instructor");
-//			return;
-//		}				
-		
-		int studiosCount = 0;
+		List <Studio> studios = new ArrayList<Studio>(1);
+		studios.add(Studio.createFromNameURL("fresh-yoga-9th-square"));		
 		
 		logger.info("MainLoop.numThreads is autowired to "+numThreads);
 		logger.info("MainLoop.numStudios is autowired to "+numStudios);
 		
+		int studiosCount = 0;
 		for (final Studio studio : studios) {
-			 if (numStudios>0 && studiosCount>numStudios){
-				 break;
-			 }
-			 studiosCount++;
+			if (numStudios>0 && studiosCount>numStudios){
+				break;
+			}
+			studiosCount++;
+			
+			logger.info("In The loop reading studio: " + studio.getName());			
+			
+			launchStudioParser_Sync(studio);
 
-			final String studioName = studio.getName();
-			logger.info("In The loop reading studio: " + studioName);
-			Runnable task = new Runnable() {
-				public void run() {
-					Parser parser;
-					parser = Parser.createNew(Parser.STUDIO_JOSCHI_NYC);
-					try {
-						logger.info("Starting To Process Studio: " + studioName+", id="+studio.getId());
-						parser.parseStudioSite(studio);
-						logger.info("Finished Processing Studiooo: " + studioName+", id="+studio.getId());
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			};
-			exec.execute(task);
-
-			logger.info("At the end of the loop - studio: " + studioName+", id="+studio.getId());
+			logger.info("At the end of the loop - studio: " + studio.getName()+", id="+studio.getId());
 		}
+	}
+
+	/**
+	 * @param studio
+	 * @return
+	 */
+	protected void launchStudioParser_Sync(final Studio studio) {
+		
+		Parser parser;
+		parser = Parser.createNew(Parser.STUDIO_JOSCHI_NYC);		
+		try {
+			logger.info("Starting To Process Studio: " + studio.getName()+", id="+studio.getId());
+			parser.parseStudioSite(studio);
+			logger.info("Finished Processing Studiooo: " + studio.getName()+", id="+studio.getId());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	
+	/**
+	 * @param studio
+	 * @return
+	 */
+	protected void launchStudioParser_Async(final Studio studio) {
+		final String studioName = studio.getName();
+		
+		Runnable task = new Runnable() {
+			public void run() {				
+				Parser parser;
+				parser = Parser.createNew(Parser.STUDIO_JOSCHI_NYC);
+				try {
+					logger.info("Starting To Process Studio: " + studioName+", id="+studio.getId());
+					parser.parseStudioSite(studio);
+					logger.info("Finished Processing Studiooo: " + studioName+", id="+studio.getId());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		};
+		exec.execute(task);
 	}
 
 	/**

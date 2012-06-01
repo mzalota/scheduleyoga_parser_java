@@ -1,4 +1,4 @@
-package com.scheduleyoga.parser;
+package com.scheduleyoga.dao;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +11,7 @@ public class StudioOld {
 	static public final int STUDIO_ID_JIVAMUKTIYOGA = 4;  
 	static public final int STUDIO_ID_LAUGHING_LOTUS = 5;
 	static public final int STUDIO_ID_OM_YOGA = 6;
+	
 	
 	protected Map<String, String> xPathMap = new HashMap<String, String>();
 	protected Map<String, String> scheduleURL = new HashMap<String, String>();

@@ -122,6 +122,25 @@ public class Helper {
 		return found;
 	}
 
+	
+	/**
+	 * @param dayOfTheWeek
+	 * @throws ParseException
+	 */
+	public Date nextDateFromDayOfTheWeek(String dayOfTheWeek, Date today) throws ParseException{
+		SimpleDateFormat formatter = new SimpleDateFormat("EEEE");
+		Date dt = formatter.parse(dayOfTheWeek.toLowerCase().trim());
+		
+		Calendar cal = new GregorianCalendar();
+		cal.setTime(dt);
+		int dayNum = cal.get(Calendar.DAY_OF_WEEK);
+		
+//		String dayNumStr = new SimpleDateFormat("F").format(dt);
+//		int dayNum = Integer.parseInt(dayNumStr);
+
+		return nextDateFromDayOfTheWeek(dayNum, today);		
+	}
+	
 	/**
 	 * @param dayOfWeek //value as defined in Calendar e.g. Calendar.MONDAY, Calendar.TUESDAY, etc.
 	 * @param today

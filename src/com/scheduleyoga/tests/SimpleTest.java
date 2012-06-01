@@ -402,6 +402,42 @@ public class SimpleTest extends TestCase {
 		
 	}	
 	
+
+	public void testNextDateFromDayOfTheWeek_string_todayIsTue() throws ParseException {
+		
+		//SETUP
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Date testTodayDate = (Date)formatter.parse("2012-05-29"); //"today" is Tuesday		
+
+		String TEST_DAYOFWEEK_TUE = " TUESDAY "; 
+		String expectedDate_TUE = "2012-05-29"; //This is Thu
+
+		String TEST_DAYOFWEEK_THU = " THURSDAY "; 
+		String expectedDate_THU = "2012-05-31"; //This is Thu
+
+		String TEST_DAYOFWEEK_SUN = " SUNDAY "; 
+		String expectedDate_SUN = "2012-06-03"; //This is Sun
+		
+		
+		//EXECUTE
+		Date result_tue = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_TUE, testTodayDate);
+		Date result_thu = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_THU, testTodayDate);
+		Date result_sun = Helper.createNew().nextDateFromDayOfTheWeek(TEST_DAYOFWEEK_SUN, testTodayDate);
+		//ASSERT
+		assertNotNull(result_tue);
+		assertEquals(expectedDate_TUE, formatter.format(result_tue));
+
+		//ASSERT
+		assertNotNull(result_thu);
+		assertEquals(expectedDate_THU, formatter.format(result_thu));
+		
+		//ASSERT
+		assertNotNull(result_sun);
+		assertEquals(expectedDate_SUN, formatter.format(result_sun));
+		
+	}	
+	
+	
 	public void testConvertSimpleTimeStrToDate_earlyMorning() {
 		
 		//Setup
