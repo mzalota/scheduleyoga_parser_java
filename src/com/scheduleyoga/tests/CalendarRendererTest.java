@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
 
 
 /**
- * Tests for CalendarRenerer classes hj
+ * Some simple tests.
  *
  */
 
