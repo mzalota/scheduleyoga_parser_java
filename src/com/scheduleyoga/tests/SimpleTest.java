@@ -447,7 +447,13 @@ public class SimpleTest extends TestCase {
 		
 		//Execute
 		Parser parser = new Parser();
-		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		Date resultDate;
+		try {
+			resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		} catch (ParseException e) {
+			fail("date could not be parsed");
+			return;
+		}
 		
 		//Assert
 		assertNotNull(resultDate);
@@ -464,7 +470,13 @@ public class SimpleTest extends TestCase {
 		
 		//Execute
 		Parser parser = new Parser();
-		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, true);
+		Date resultDate;
+		try {
+			resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, true);
+		} catch (ParseException e) {
+			fail("date could not be parsed");
+			return;
+		}
 		
 		//Assert
 		assertNotNull(resultDate);
@@ -481,7 +493,13 @@ public class SimpleTest extends TestCase {
 		
 		//Execute
 		Parser parser = new Parser();
-		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		Date resultDate;
+		try {
+			resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		} catch (ParseException e) {
+			fail("date could not be parsed");
+			return;
+		}
 		
 		//Assert
 		assertNotNull(resultDate);
@@ -498,7 +516,13 @@ public class SimpleTest extends TestCase {
 		
 		//Execute
 		Parser parser = new Parser();
-		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		Date resultDate;
+		try {
+			resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, false);
+		} catch (ParseException e) {
+			fail("date could not be parsed");
+			return;
+		}
 		
 		//Assert
 		assertNotNull(resultDate);
@@ -516,7 +540,13 @@ public class SimpleTest extends TestCase {
 		
 		//Execute
 		Parser parser = new Parser();
-		Date resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, true);
+		Date resultDate;
+		try {
+			resultDate = Helper.createNew().deduceDateFromSimpleTimeString(TEST_TIME, true);
+		} catch (ParseException e) {
+			fail("date could not be parsed");
+			return;
+		}
 		
 		//Assert
 		assertNotNull(resultDate);

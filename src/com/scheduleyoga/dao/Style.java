@@ -152,11 +152,13 @@ public class Style {
 		containsMap.put("level i ii ", Style.NAME_INTERMEDIATE);
 		containsMap.put("level 2 ", Style.NAME_INTERMEDIATE);
 		containsMap.put("level 1 2 ", Style.NAME_INTERMEDIATE);
+		containsMap.put("levels 2 ", Style.NAME_INTERMEDIATE);
 		
 		containsMap.put("advanced", Style.NAME_ADVANCED);
 		containsMap.put(" adv ", Style.NAME_ADVANCED);
 		containsMap.put("level ii iii ", Style.NAME_ADVANCED);
 		containsMap.put("level 2 3 ", Style.NAME_ADVANCED);
+		containsMap.put("levels 2 3", Style.NAME_ADVANCED);
 		
 		containsMap.put("hot ", Style.NAME_HOT_YOGA);
 		containsMap.put("heated", Style.NAME_HOT_YOGA);

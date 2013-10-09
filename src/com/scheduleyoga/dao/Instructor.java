@@ -124,24 +124,31 @@ public class Instructor implements Comparable<Instructor> {
 				//this string contains only one space, so it ends with a single letter -- its an abbriviation.
 				return null;
 			}			
-		}
+		}		
+		
+		//instructorName = instructorName.replace("-"," ");	//If first or last name includes hyphens, replace with spaces		
 		
 		
+		String urlName = Helper.createNew().nameToURLName(instructorName);
+		
+//		Query q = DBAccess.openSession().createQuery(
+//				"from Instructor where instructor_name=:name");
+//		q.setParameter("name", instructorName);
+
 		
 		Query q = DBAccess.openSession().createQuery(
-				"from Instructor where instructor_name=:name");
-		q.setParameter("name", instructorName);
-
+			"from Instructor where name_url=:name");
+		q.setParameter("name", urlName);
+		
 		@SuppressWarnings("unchecked")
 		List<Instructor> results = (List<Instructor>) q.list();
-		if (results.size() <= 0) {
-			
+		if (results.size() <= 0) {			
 			return Instructor.createInstructor(instructorName, null);
 		}
 		
 		if (results.size() > 1){
 			//TODO: need to use Studio parameter to select correct instructor from duplicates
-			throw new RuntimeException("Found more then one rows in instructor table for name "+instructorName+". Need to implement duplicate check");
+			throw new RuntimeException("Found more then one rows in instructor table for name "+instructorName+", name_url "+urlName+". Need to implement duplicate check");
 		}
 		
 		return results.get(0); 

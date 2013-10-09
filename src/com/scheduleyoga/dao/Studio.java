@@ -36,6 +36,8 @@ import com.scheduleyoga.common.LookUp;
 public class Studio {
 
 	static public final int STUDIO_FRESH_YOGA = 104;
+	static public final int STUDIO_FRESH_YOGA_ERECTOR_SQUARE = 105;
+	static public final int STUDIO_BALANCED_YOGA = 107;
 	
 	private static final Logger logger = Logger.getLogger(Studio.class);
 	
@@ -99,7 +101,7 @@ public class Studio {
 		q.setParameter("this", this);
 		q.executeUpdate();
 		sess.getTransaction().commit();
-		logger.info("Finished DELETITNG");
+		logger.debug("Finished DELETITNG");
 	}
 	
 	public int getId() {

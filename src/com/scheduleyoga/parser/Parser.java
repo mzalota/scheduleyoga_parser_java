@@ -34,6 +34,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.WordUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -48,7 +49,10 @@ import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebRequest;
+import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.FrameWindow;
 import com.gargoylesoftware.htmlunit.html.HTMLParserListener;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -58,6 +62,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
+import com.gargoylesoftware.htmlunit.util.FalsifyingWebConnection;
 //import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
 
 import com.scheduleyoga.Main.MainLoop;
@@ -188,10 +193,11 @@ public class Parser {
 			}
 			
 			Set<String> styleNames = Style.styleNamesFromClassName(event.getComment());
-			logger.info("ClassName is: "+event.getComment()+", styleNames are: "+styleNames);
+			logger.debug("ClassName is: "+event.getComment()+", styleNames are: "+styleNames);
 			event.setStyleNames(styleNames);
 			
 			Instructor instructor = Instructor.fetchInstructorByName(instructorName,studio);
+			logger.debug("Instructor is: "+instructor);
 			if (instructor != null) {
 				event.setInstructor(instructor);
 			}
@@ -211,15 +217,29 @@ public class Parser {
 			case StudioOld.STUDIO_ID_KAIAYOGA:
 				return parseMindAndBodyOnline2(studio);
 			case Studio.STUDIO_FRESH_YOGA:
+			case Studio.STUDIO_FRESH_YOGA_ERECTOR_SQUARE:
 			try {
 				return parseFreshYoga(studio);
+			} catch (FailingHttpStatusCodeException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return "";
+			} catch (ParsingErrorException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return "";
+			}			
+			case Studio.STUDIO_BALANCED_YOGA:
+			try {
+				return parseBalancedYoga(studio);
 			} catch (FailingHttpStatusCodeException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ParsingErrorException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}				
+			}
+				
 			default:
 				return parseMindAndBodyOnline2(studio);	
 				
@@ -269,7 +289,7 @@ public class Parser {
 	protected void parseJivamukti() throws FailingHttpStatusCodeException, IOException{
 		
 		String urlStr = scheduleURL.get(studioID);		
-		WebClient webClient = new WebClient();
+		WebClient webClient = getWebClient();
         URL url = new URL(urlStr); 
         
         HtmlPage page = (HtmlPage) webClient.getPage(url);
@@ -321,7 +341,7 @@ public class Parser {
 	
 	protected void parseLaughingLotus() throws FailingHttpStatusCodeException, IOException {
 		String urlStr = scheduleURL.get(studioID);		
-		WebClient webClient = new WebClient();
+		WebClient webClient = getWebClient();
         URL url = new URL(urlStr); 
         
         HtmlPage page = (HtmlPage) webClient.getPage(url);
@@ -356,7 +376,7 @@ public class Parser {
 	protected void parseYoschiNYC() throws FailingHttpStatusCodeException, IOException{
 		
 		String urlStr = scheduleURL.get(studioID);		
-		WebClient webClient = new WebClient();
+		WebClient webClient = getWebClient();
         URL url = new URL(urlStr); 
         
         HtmlPage page = (HtmlPage) webClient.getPage(url);
@@ -412,11 +432,137 @@ public class Parser {
 		textExtractor.parseDocument(subRow.asXml());
 		return textExtractor.getValues();
 	}
-
+	
+	
+	protected String parseBalancedYoga(Studio studio) throws FailingHttpStatusCodeException, IOException, ParsingErrorException{
+		
+		WebClient webClient = getWebClient();
+        URL url = new URL(studio.getUrlSchedule()); 
+		
+        HtmlPage page = (HtmlPage) webClient.getPage(url);
+        
+        HtmlElement schedSection = (HtmlElement) page.getByXPath(studio.getXpath()).get(0);            
+        
+        List<HtmlTable> daySchedTables = (List<HtmlTable>) schedSection.getByXPath("//table");
+                
+        if (daySchedTables.size()<1){
+        	//TODO: log error/warning that we could not parse the page.
+        	return "";
+        }
+        
+        List<Event> events = new ArrayList<Event>();
+        int tblCount = 0;
+        for (HtmlTable tbl : daySchedTables) {
+        	String dayOfTheWeek = "MONDAY";
+        
+        	if (tblCount == 0){
+        		dayOfTheWeek = "MONDAY";
+        	} else if (tblCount == 1){
+        		dayOfTheWeek = "TUESDAY";
+        	} else if (tblCount == 2){
+        		dayOfTheWeek = "WEDNESDAY";
+        	} else if (tblCount == 3){
+        		dayOfTheWeek = "THURSDAY";
+        	} else if (tblCount == 4){
+        		dayOfTheWeek = "FRIDAY";
+        	} else if (tblCount == 5){
+        		dayOfTheWeek = "SATURDAY";
+        	} else if (tblCount == 6){
+        		dayOfTheWeek = "SUNDAY";
+        	}    		
+        	tblCount++;
+        	
+        	boolean afterNoon = false;
+        	for (int rowNum = 0; rowNum< tbl.getRowCount(); rowNum++){
+        		List<HtmlTableCell> cells = tbl.getRow(rowNum).getCells();
+        		if (cells.size()<4){
+        			//TODO: Show warning that could not parse event
+        			continue;
+        		}
+        		List<String> timeParts = buildParts(cells.get(0));
+        		List<String> classNameParts = buildParts(cells.get(1));
+        		List<String> teacherNameParts = buildParts(cells.get(2));
+        		List<String> commentParts = buildParts(cells.get(3));
+        		
+        		if (timeParts.size()<0){
+        			//Time is invalid
+        			continue;
+        		}
+        		if (classNameParts.size()<0){
+        			//Time is invalid
+        			continue;
+        		}
+        		if (teacherNameParts.size()<0){
+        			//Time is invalid
+        			continue;
+        		}
+        		if (commentParts.size()<0){
+        			//Time is invalid
+        			continue;
+        		}
+        		
+        		String className = WordUtils.capitalizeFully(classNameParts.get(0));
+        		String teacherName = WordUtils.capitalizeFully(teacherNameParts.get(0));
+        		String comment = WordUtils.capitalizeFully(commentParts.get(0));        		
+        		
+        		Date startTime = freshYoga_deriveStartTime(timeParts.get(0), dayOfTheWeek, afterNoon);
+        		if (startTime == null){
+        			continue;
+        		}
+        		
+        		if (new SimpleDateFormat("a").format(startTime).equalsIgnoreCase("pm")){
+        			//This is the first time that we saw a time in the afternoon. 
+        			//set afteNoon flag to be true - all times that follow will be in the afternoon.
+        			afterNoon=true;
+        		}
+        		
+        		logger.info("dayOfTheWeek: "+dayOfTheWeek+" time is: "+timeParts.get(0)+
+        				" className is: "+className+" "+comment+
+        				" instructorName is: " + teacherName +
+        				" startTime: "+startTime);
+        		
+        		
+        		Set<String> styles = Style.styleNamesFromClassName(className);
+        		Set<String> styles2 = Style.styleNamesFromClassName(commentParts.get(0));
+        		styles.addAll(styles2);
+        		
+        		Event event = Event.createNew();
+        		event.setStartTime(startTime);
+        		event.setInstructorName(teacherName);
+        		event.setComment(className+" ("+comment+")");
+        		event.setStyleNames(styles);  
+        		
+        		//Event For next week
+        		Calendar cal = new GregorianCalendar();
+        		cal.setTime(startTime);
+        		cal.add(Calendar.DATE, 7);
+        		
+        		Event eventNextWeek = Event.createNew();
+        		eventNextWeek.setStartTime(cal.getTime());
+        		eventNextWeek.setInstructorName(teacherName);
+        		eventNextWeek.setComment(className+" ("+comment+")");
+        		eventNextWeek.setStyleNames(styles);
+        		
+        		events.add(event);
+        		events.add(eventNextWeek);
+        		
+        	}
+        }
+        
+        if(events.size()<1){
+        	//TODO: Show warning that we did not find any events.
+        }
+        
+        //Delete all the events.
+        studio.deleteEvents();
+        saveEventsOneList(studio, events);    
+        
+        return "";
+	}
 	
 	protected String parseFreshYoga(Studio studio) throws FailingHttpStatusCodeException, IOException, ParsingErrorException{
 		
-		WebClient webClient = new WebClient();
+		WebClient webClient = getWebClient();
         URL url = new URL(studio.getUrlSchedule()); 
 		
         HtmlPage page = (HtmlPage) webClient.getPage(url);
@@ -523,10 +669,24 @@ public class Parser {
 			return null;		
 		}
 		
-		String[] timeArr = StringUtils.split(time, "-");
-		String startTimeStr = timeArr[0].trim();
+//		String[] timeArr = StringUtils.split(time, "-");
+//		String startTimeStr = timeArr[0].trim();
 		
-		Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);    			
+		String startTimeStr = StringUtils.substringBefore(time, "-");
+		startTimeStr = startTimeStr.replaceAll("\\s+", " "); //replace any sequence of white space characters with a single s[ace
+				
+		if (startTimeStr.equalsIgnoreCase("noon")){
+			startTimeStr = "12:00";
+		}
+		
+		Date eventTime;
+		try {
+			eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+		} catch (ParseException e1) {
+			logger.warn(e1.getMessage());
+			logger.warn(e1.getStackTrace());
+			return null;
+		}    			
 		String eventTimeStr = new SimpleDateFormat("HH:mm").format(eventTime);
 		
 		String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(curDate);
@@ -544,7 +704,7 @@ public class Parser {
 	
 	protected String parseOmYoga(Studio studio) throws FailingHttpStatusCodeException, IOException{
 		
-		WebClient webClient = new WebClient();
+		WebClient webClient = getWebClient();
         URL url = new URL(studio.getUrlSchedule()); 
 		
         HtmlPage page = (HtmlPage) webClient.getPage(url);
@@ -553,7 +713,7 @@ public class Parser {
         EventsParser_OmYoga eventParser = new EventsParser_OmYoga();
         
         Segment calendarSegment = Segment.createNewFromElement(table, eventParser);
-        System.out.println("The table is: "+calendarSegment);                
+        logger.debug("The table is: "+calendarSegment);                
         
         List<List<List<Event> > > allEvents = calendarSegment.extractEvents();
         
@@ -569,7 +729,7 @@ public class Parser {
         URL url = new URL(studio.getUrlSchedule());
         
         HtmlPage pageOuter;
-        logger.info("Loading Page: "+url);
+        logger.info("Loading WebPage: "+url);
         pageOuter = (HtmlPage)webClient.getPage(url);        
         
         List<FrameWindow> frames = pageOuter.getFrames();        
@@ -610,7 +770,7 @@ public class Parser {
         xPathParam =  "//*[@id=\"classSchedule-mainTable\"]";
         logger.info("XPath is: "+xPathParam);
         List<HtmlElement> elements = (List<HtmlElement>) page.getByXPath(xPathParam);
-        logger.debug("Count of elements: "+elements.size());
+        logger.info("Count of HTML elements: "+elements.size());
         
         if (elements.size() <=0 ){
         	logger.error("COULD NOT FIND specified XPath: "+xPathParam);
@@ -689,6 +849,29 @@ public class Parser {
 //			}
 //		});
 		
+		
+		//Do not load Google Analytics or Facebook javascripts because they cause a lot of errors in HtmlUnit(e.g. Shockwave Flash) 
+		webClient.setWebConnection(new FalsifyingWebConnection(webClient) {
+            @Override
+            public WebResponse getResponse(final WebRequest request) throws IOException {
+            	URL url = request.getUrl();
+            	if ("www.google-analytics.com".equals(url.getHost())) {
+            		return createWebResponse(request, "", "application/javascript"); // -> empty script
+            	}
+            	if ("ssl.google-analytics.com".equals(url.getHost())) {
+            		return createWebResponse(request, "", "application/javascript"); // -> empty script
+            	}
+            	if ("connect.facebook.net".equals(url.getHost())) {
+            		return createWebResponse(request, "", "application/javascript"); // -> empty script
+            	}       
+            	String fileName = url.getFile().substring( url.getFile().lastIndexOf('/')+1, url.getFile().length() );
+            	if("mb.facebook.js".equals(fileName)){
+            		return createWebResponse(request, "", "application/javascript"); // -> empty script
+            	}
+            	return super.getResponse(request);
+            }
+        });
+		
 		return webClient;
 	}
 	
@@ -699,8 +882,12 @@ public class Parser {
 		SegmentHorizontal calendarSegment = (SegmentHorizontal) SegmentHorizontal.createNewFromElement(table, eventParser);
 		
 		List<Event> events = calendarSegment.extractEvents();
-
-		logger.debug("Extracted "+events.size()+" events");
+		
+		if (events.size()<=0){
+			logger.warn("Did not extract any events.");
+		} else {
+			logger.info("Extracted "+events.size()+" events");
+		}
 		
 		saveEventsOneList(studio, events);
         
@@ -719,7 +906,7 @@ public class Parser {
 			IOException {
 		String urlStr = scheduleURL.get(studioID);
 		
-		final WebClient webClient = new WebClient();
+		final WebClient webClient = getWebClient();
         URL url =  new URL(urlStr); 
         
         HtmlPage pageOuter;
@@ -864,7 +1051,7 @@ public class Parser {
         String btnXPath = "//*[@id=\"week-arrow-r\"]";
         HtmlElement btn = (HtmlElement) pageTwo.getElementById("week-arrow-r");
         
-        logger.info("Hello Max 00: Found Button:"+btn.toString());
+        logger.info("Found Button:"+btn.toString());
         
         HtmlPage page2;
 		try {
@@ -1025,7 +1212,14 @@ public class Parser {
 			Date eventDate = helper.nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
 			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(eventDate); 			
 			
-			Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			Date eventTime;
+			try {
+				eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			} catch (ParseException e1) {
+				logger.warn(e1.getMessage());
+				logger.warn(e1.getStackTrace());
+				return null;
+			}
 			String eventTimeStr = new SimpleDateFormat("hh:mm a").format(eventTime);
 			
 			//SimpleDateFormat formatterAmPm = ;
@@ -1142,7 +1336,17 @@ public class Parser {
 			Date eventDate = helper.nextDateFromDayOfTheWeek(getColumnNumber()+1, new Date());			
 			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(eventDate); 			
 			
-			Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			//startTimeStr = startTimeStr.split("-")[0];
+			
+			startTimeStr = StringUtils.substringBefore(startTimeStr, "-");
+			
+			Date eventTime;
+			try {
+				eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			} catch (ParseException e1) {
+				logger.warn("Could not Parse Date: "+startTimeStr, e1);
+				return null;
+			}
 			String eventTimeStr = new SimpleDateFormat("hh:mm a").format(eventTime);
 			
 			//SimpleDateFormat formatterAmPm = ;
@@ -1234,7 +1438,7 @@ public class Parser {
 					return null;
 				} catch (ParseException e) {
 					//This row does not contain date. Ignore this row
-					e.printStackTrace();
+					//TODO:: add warning that the date is unpareable					
 					return null;
 				}
 			}
@@ -1323,7 +1527,14 @@ public class Parser {
 			Helper helper = Helper.createNew();
 			String eventDateStr = new SimpleDateFormat("yyyy-MM-dd").format(curDate);
 			
-			Date eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			Date eventTime;
+			try {
+				eventTime = helper.deduceDateFromSimpleTimeString(startTimeStr, afterNoon);
+			} catch (ParseException e1) {
+				logger.warn(e1.getMessage());
+				logger.warn(e1.getStackTrace());
+				return null;
+			}
 			String eventTimeStr = new SimpleDateFormat("HH:mm").format(eventTime);
 			
 			if (new SimpleDateFormat("a").format(eventTime).equalsIgnoreCase("pm")){

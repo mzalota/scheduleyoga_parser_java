@@ -3,7 +3,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 	<bean id="MainLoopBean" class="com.scheduleyoga.Main.MainLoop">
-		<constructor-arg index="0" type="int" value="3"/>
+		<constructor-arg index="0" type="int" value="4"/>
 <!-- 		<property name="numStudios" value="3"/> -->
 	</bean>
 </beans>

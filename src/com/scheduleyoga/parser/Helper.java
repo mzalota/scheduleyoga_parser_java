@@ -160,7 +160,7 @@ public class Helper {
 		return cal.getTime();
 	}
 	
-	public Date deduceDateFromSimpleTimeString(String timeStr, boolean afterNoon) {
+	public Date deduceDateFromSimpleTimeString(String timeStr, boolean afterNoon) throws ParseException {
 		
 		String dateStr;
 		if (afterNoon){
@@ -170,14 +170,8 @@ public class Helper {
 		}
 		
 		SimpleDateFormat formatter = new SimpleDateFormat("hh:mm a");
-		Date dt;
-		try {
-			dt = (Date) formatter.parse(dateStr);
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
+		Date dt = (Date) formatter.parse(dateStr);
+
 		
 		if (afterNoon){
 			//the caller specified that its the time is in the afternoon. Believe the caller

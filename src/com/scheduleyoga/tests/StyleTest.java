@@ -148,6 +148,14 @@ public class StyleTest {
 		styles = Style.styleNamesFromClassName(YOGA_CLASS_NAME);
 		assertThat(styles, hasItem(Style.NAME_INTERMEDIATE));
 		
+		YOGA_CLASS_NAME = "Power Yoga - Level 2/3 (1 hour & 15 minutes)";
+		styles = Style.styleNamesFromClassName(YOGA_CLASS_NAME);
+		assertThat(styles, hasItem(Style.NAME_INTERMEDIATE));
+		
+		YOGA_CLASS_NAME = " LEVELS 2/3 ";
+		styles = Style.styleNamesFromClassName(YOGA_CLASS_NAME);
+		assertThat(styles, hasItem(Style.NAME_INTERMEDIATE));
+		
 		YOGA_CLASS_NAME = "Lunchbox Yoga - Level 2 (1 hour)";
 		styles = Style.styleNamesFromClassName(YOGA_CLASS_NAME);
 		assertThat(styles, hasItem(Style.NAME_INTERMEDIATE));
@@ -176,6 +184,10 @@ public class StyleTest {
 		assertThat(styles, hasItem(Style.NAME_ADVANCED));
 		
 		YOGA_CLASS_NAME = "Power Yoga - Level 2/3 (1 hour & 15 minutes)";
+		styles = Style.styleNamesFromClassName(YOGA_CLASS_NAME);
+		assertThat(styles, hasItem(Style.NAME_ADVANCED));
+		
+		YOGA_CLASS_NAME = " LEVELS 2/3 ";
 		styles = Style.styleNamesFromClassName(YOGA_CLASS_NAME);
 		assertThat(styles, hasItem(Style.NAME_ADVANCED));
 		

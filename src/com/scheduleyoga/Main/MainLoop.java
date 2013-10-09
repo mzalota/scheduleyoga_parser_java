@@ -15,6 +15,17 @@ import com.scheduleyoga.dao.Instructor;
 import com.scheduleyoga.dao.Studio;
 import com.scheduleyoga.parser.Parser;
 
+
+//insert into studios (name, state, name_url, url_home, url_schedule, xpath, created_on) values
+//("Fresh Yoga Erector Square",
+//"connecticut",
+//"fresh-yoga-erector-square",
+//"http://www.freshyoga.com/index.html",
+//"http://www.freshyoga.com/classes_erector_square.html",
+//"/html/body/div/div[2]/div[2]/div",
+//NOW());
+
+
 public class MainLoop {
 
 	private final int numThreads;
@@ -38,10 +49,12 @@ public class MainLoop {
 
 		//https://clients.mindbodyonline.com/ASP/main_class.asp?tg=0&vt=&lvl=&view=&trn=&date=10/24/2011&loc=0&page=1&pMode=&prodid=&stype=7&classid=0&catid=&justloggedin=&nLgIn=%22%20name=%22mainFrame%22%3E
 		
-		//List<Studio> studios = Studio.getAllStudios();				
+		List<Studio> studios = Studio.getAllStudios();				
 		
-		List <Studio> studios = new ArrayList<Studio>(1);
-		studios.add(Studio.createFromNameURL("fresh-yoga-9th-square"));		
+		//Sivananda Yoga Centers NY (NYC), id=100
+		
+		//List <Studio> studios = new ArrayList<Studio>(1);
+		//studios.add(Studio.createFromNameURL("yoga-mountain")); //"fresh-yoga-9th-square"));		
 		
 		logger.info("MainLoop.numThreads is autowired to "+numThreads);
 		logger.info("MainLoop.numStudios is autowired to "+numStudios);
@@ -55,7 +68,11 @@ public class MainLoop {
 			
 			logger.info("In The loop reading studio: " + studio.getName());			
 			
-			launchStudioParser_Sync(studio);
+			if (numThreads<=1){
+				launchStudioParser_Sync(studio);
+			} else {
+				launchStudioParser_Async(studio);
+			}
 
 			logger.info("At the end of the loop - studio: " + studio.getName()+", id="+studio.getId());
 		}
@@ -70,9 +87,9 @@ public class MainLoop {
 		Parser parser;
 		parser = Parser.createNew(Parser.STUDIO_JOSCHI_NYC);		
 		try {
-			logger.info("Starting To Process Studio: " + studio.getName()+", id="+studio.getId());
+			logger.info("Starting To Process Studio: " + studio.getName()+", id="+studio.getId()+" schedule_url: "+studio.getUrlSchedule());
 			parser.parseStudioSite(studio);
-			logger.info("Finished Processing Studiooo: " + studio.getName()+", id="+studio.getId());
+			logger.info("Finished Processing Studio: " + studio.getName()+", id="+studio.getId());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
